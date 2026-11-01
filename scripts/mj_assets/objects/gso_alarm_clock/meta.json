@@ -1,0 +1,44 @@
+{
+ "name_ja": "目覚まし時計",
+ "name_en": "alarm clock",
+ "gso_name": "Crosley_Alarm_Clock_Vintage_Metal",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.35,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1095,
+  0.0538,
+  0.1625
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  82,
+  97,
+  104
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1076,
+ "collision_mass_split": [
+  0.0676,
+  0.2097,
+  0.008,
+  0.0459,
+  0.0265,
+  0.0571,
+  0.0032,
+  0.0042,
+  0.0029,
+  0.0564,
+  0.1687,
+  0.0092,
+  0.0178,
+  0.2359,
+  0.0115,
+  0.0753
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "name_ja": "パイナップルのマラカス",
+ "name_en": "pineapple maraca",
+ "gso_name": "PINEAPPLE_MARACA_6_PCSSET",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.06,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.1004,
+  0.0687,
+  0.0538
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  38,
+  156,
+  166
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 2 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1528,
+ "collision_mass_split": [
+  0.0037,
+  0.0227,
+  0.0171,
+  0.092,
+  0.0174,
+  0.0042,
+  0.0051,
+  0.0331,
+  0.0256,
+  0.0391,
+  0.079,
+  0.0232,
+  0.0861,
+  0.397,
+  0.0668,
+  0.0878
+ ]
+}

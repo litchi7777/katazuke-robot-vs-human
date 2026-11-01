@@ -1,0 +1,44 @@
+{
+ "name_ja": "ハニーディッパー",
+ "name_en": "honey dipper",
+ "gso_name": "Cole_Hardware_Mini_Honey_Dipper",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.015,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1107,
+  0.0205,
+  0.0216
+ ],
+ "graspable_guess": true,
+ "split": "test",
+ "mean_bgr": [
+  125,
+  156,
+  178
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 9 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 686,
+ "collision_mass_split": [
+  0.1418,
+  0.1109,
+  0.0409,
+  0.0072,
+  0.0259,
+  0.0077,
+  0.009,
+  0.0168,
+  0.0888,
+  0.0434,
+  0.1632,
+  0.1659,
+  0.0096,
+  0.0715,
+  0.0698,
+  0.0275
+ ]
+}

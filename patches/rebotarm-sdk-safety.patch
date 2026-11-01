@@ -1,0 +1,558 @@
+diff --git a/reBotArm_control_py/actuator/rebotarm.py b/reBotArm_control_py/actuator/rebotarm.py
+index 2f9e6e0..3add855 100644
+--- a/reBotArm_control_py/actuator/rebotarm.py
++++ b/reBotArm_control_py/actuator/rebotarm.py
+@@ -442,6 +442,60 @@ class JointGroup:
+         return f"JointGroup({self.name!r}, joints={self.num_joints}, mode={self._mode})"
+ 
+ 
++class _LoopStats:
++    """Control-loop timing written by the loop thread, read by monitors.
++
++    Plain counters under a lock; the loop never blocks on readers for long.
++    """
++
++    def __init__(self, dt: float) -> None:
++        self._dt = dt
++        self._lock = threading.Lock()
++        self._reset()
++
++    def _reset(self) -> None:
++        self._count = 0
++        self._overruns = 0
++        self._elapsed_sum = 0.0
++        self._elapsed_max = 0.0
++        self._period_sum = 0.0
++        self._period_max = 0.0
++        self._periods = 0
++        self._last_start: Optional[float] = None
++
++    def record(self, start: float, elapsed: float) -> None:
++        with self._lock:
++            self._count += 1
++            self._elapsed_sum += elapsed
++            self._elapsed_max = max(self._elapsed_max, elapsed)
++            if elapsed > self._dt:
++                self._overruns += 1
++            if self._last_start is not None:
++                period = start - self._last_start
++                self._period_sum += period
++                self._period_max = max(self._period_max, period)
++                self._periods += 1
++            self._last_start = start
++
++    def snapshot(self, reset: bool = False) -> dict:
++        with self._lock:
++            out = {
++                "configured_period_s": self._dt,
++                "iterations": self._count,
++                "overruns": self._overruns,
++                "callback_mean_s": self._elapsed_sum / self._count if self._count else None,
++                "callback_max_s": self._elapsed_max if self._count else None,
++                "period_mean_s": self._period_sum / self._periods if self._periods else None,
++                "period_max_s": self._period_max if self._periods else None,
++            }
++            if reset:
++                last = self._last_start
++                self._reset()
++                # Keep the period chain continuous across report windows.
++                self._last_start = last
++            return out
++
++
+ # --------------------------------------------------------------------------
+ # RebotArm — 分组控制器容器
+ # --------------------------------------------------------------------------
+@@ -595,8 +649,16 @@ class RebotArm:
+             g.enable()
+ 
+     def disable_all(self) -> None:
+-        for g in self._groups.values():
+-            g.disable()
++        # Controller.disable_all stops at its first error, and JointGroup.disable
++        # used to swallow that error. Attempt every motor and report failures.
++        errors = []
++        for name, motor in self._motor_map.items():
++            try:
++                motor.disable()
++            except Exception as exc:
++                errors.append(f"{name}: {exc}")
++        if errors:
++            raise RuntimeError("motor disable failed: " + "; ".join(errors))
+ 
+     # ── 零点 ────────────────────────────────────────────────────────────
+ 
+@@ -673,16 +735,30 @@ class RebotArm:
+     def disconnect(self) -> None:
+         if not self._connected:
+             return
+-        self.stop_control_loop()
+-        self.disable_all()
+-        time.sleep(0.5)
+-        for ctrl in self._ctrl_map.values():
+-            ctrl.shutdown()
+-            time.sleep(0.1)
+-            ctrl.close()
+-        self._ctrl_map.clear()
+-        self._motor_map.clear()
+-        self._connected = False
++        errors = []
++        for label, operation in (("stop_control_loop", self.stop_control_loop),
++                                 ("disable_all", self.disable_all)):
++            try:
++                operation()
++            except Exception as exc:
++                errors.append(f"{label}: {exc}")
++        if self.control_loop_active:
++            # Do not release handles while a control callback can still use them.
++            raise RuntimeError("disconnect: control loop is still alive; " + "; ".join(errors))
++        for vendor, ctrl in list(self._ctrl_map.items()):
++            try:
++                # disable_all was already attempted for every motor. Avoid a
++                # second fail-fast shutdown that can skip closing later buses.
++                ctrl.close()
++            except Exception as exc:
++                errors.append(f"close {vendor}: {exc}")
++            else:
++                del self._ctrl_map[vendor]
++        if not self._ctrl_map:
++            self._motor_map.clear()
++            self._connected = False
++        if errors:
++            raise RuntimeError("disconnect failed: " + "; ".join(errors))
+ 
+     def estop(self) -> None:
+         self.disable_all()
+@@ -727,6 +803,7 @@ class RebotArm:
+         self._running = True
+         self._ctrl_rate = rate if rate is not None else self._rate
+         self._ctrl_fn = control_fn
++        self._loop_stats = _LoopStats(1.0 / self._ctrl_rate)
+         self._ctrl_thread = threading.Thread(
+             target=self._control_loop_impl,
+             name="rebotarm-control-loop",
+@@ -736,6 +813,7 @@ class RebotArm:
+ 
+     def _control_loop_impl(self) -> None:
+         dt = 1.0 / self._ctrl_rate
++        stats = self._loop_stats
+         while self._running:
+             t0 = time.perf_counter()
+             try:
+@@ -744,15 +822,25 @@ class RebotArm:
+                 if self._running:
+                     raise
+             elapsed = time.perf_counter() - t0
++            stats.record(t0, elapsed)
+             sleep_time = dt - elapsed
+             if sleep_time > 0:
+                 time.sleep(sleep_time)
+ 
++    def control_loop_stats(self, reset: bool = False) -> dict:
++        """Measured callback time and start-to-start period of the control loop."""
++        stats = getattr(self, "_loop_stats", None)
++        return stats.snapshot(reset) if stats is not None else {}
++
+     def stop_control_loop(self) -> None:
+         self._running = False
+         t = getattr(self, "_ctrl_thread", None)
+         if t is not None and t.is_alive():
++            if t is threading.current_thread():
++                raise RuntimeError("control loop cannot join itself")
+             t.join(timeout=5.0)
++            if t.is_alive():
++                raise RuntimeError("control loop did not stop within 5 seconds")
+ 
+     # ── 上下文管理器 ───────────────────────────────────────────────────────
+ 
+diff --git a/reBotArm_control_py/controllers/rebotarm_endpose_controller.py b/reBotArm_control_py/controllers/rebotarm_endpose_controller.py
+index 601a574..c86da5c 100644
+--- a/reBotArm_control_py/controllers/rebotarm_endpose_controller.py
++++ b/reBotArm_control_py/controllers/rebotarm_endpose_controller.py
+@@ -47,7 +47,7 @@ from __future__ import annotations
+ 
+ import threading
+ import time
+-from typing import Optional
++from typing import Optional, Sequence
+ 
+ import numpy as np
+ 
+@@ -82,6 +82,7 @@ class RebotArmEndPose:
+         profile: TrajProfile = TrajProfile.MIN_JERK,
+         arm_control_mode: str = "posvel",
+         use_gravity_ff: bool = True,
++        gravity_ff_scale: Optional[Sequence[float]] = None,
+     ) -> None:
+         if arm_control_mode not in ("mit", "posvel"):
+             raise ValueError("arm_control_mode must be 'mit' or 'posvel'")
+@@ -96,6 +97,15 @@ class RebotArmEndPose:
+             raise ValueError("配置中缺少 arm 组，请检查 groups 配置")
+ 
+         self._n = self._arm_group.num_joints
++        if gravity_ff_scale is None:
++            # Upstream default: joint2/joint3 get 1.55x the model gravity.
++            scale = np.ones(self._n)
++            scale[1:3] = 1.55
++        else:
++            scale = np.asarray(gravity_ff_scale, dtype=np.float64).reshape(-1)
++            if len(scale) != self._n or not np.all(np.isfinite(scale)) or np.any(scale < 0):
++                raise ValueError("gravity_ff_scale needs one finite, non-negative value per arm joint")
++        self._gravity_ff_scale = scale
+         self._dt = dt
+         self._model = load_robot_model()
+         self._end_frame_id = get_end_effector_frame_id(self._model)
+@@ -178,11 +188,19 @@ class RebotArmEndPose:
+         timeout: float = 15.0,
+     ) -> None:
+         if not self._running:
+-            return
++            raise RuntimeError("safe_home control is not running")
++
++        if (not all(np.isfinite(v) for v in (max_vel, send_freq, settle_thresh, timeout))
++                or min(max_vel, send_freq, settle_thresh) <= 0 or timeout < 0):
++            raise ValueError("safe_home requires positive limits and a non-negative timeout")
+ 
+         q_curr, _, _ = self.rebotarm.get_state()
+         q_curr = q_curr[: self._n]
++        if not np.all(np.isfinite(q_curr)):
++            raise ValueError("non-finite safe_home start position")
+         q_start = q_curr.copy()
++        self._q_target[:] = q_start
++        self._qd_target[:] = 0.0
+ 
+         home_pos = np.zeros(self._n)
+         q_err = np.abs(home_pos - q_start)
+@@ -207,22 +225,37 @@ class RebotArmEndPose:
+ 
+         interval = t_total / num_steps if num_steps > 0 else dt_send
+         deadline = time.monotonic() + timeout
++        previous_vlim = self._vlim_override
+         self._vlim_override = np.full(self._n, max_vel, dtype=np.float64)
+-        for i in range(num_steps):
+-            if time.monotonic() > deadline:
+-                print("[safe_home] 轨迹发送超时")
+-                break
+-            self._q_target[:] = traj[i]
+-            time.sleep(interval)
+-
+-        self._q_target[:] = 0.0
+-        settle_deadline = time.monotonic() + 3.0
+-        while time.monotonic() < settle_deadline:
+-            q_now, _, _ = self.rebotarm.get_state()
+-            if np.max(np.abs(q_now[: self._n])) < settle_thresh:
+-                break
+-            time.sleep(self._dt)
+-        self._vlim_override = None
++        try:
++            for point in traj:
++                if not self._running:
++                    raise InterruptedError("safe_home stopped")
++                if time.monotonic() >= deadline:
++                    raise TimeoutError("safe_home trajectory timed out")
++                self._q_target[:] = point
++                self._qd_target[:] = 0.0
++                time.sleep(interval)
++
++            settle_deadline = time.monotonic() + 3.0
++            while True:
++                if not self._running:
++                    raise InterruptedError("safe_home stopped")
++                q_now, _, _ = self.rebotarm.get_state()
++                if not np.all(np.isfinite(q_now[: self._n])):
++                    raise ValueError("non-finite safe_home feedback")
++                if np.max(np.abs(q_now[: self._n])) < settle_thresh:
++                    return
++                if time.monotonic() >= settle_deadline:
++                    raise TimeoutError("safe_home did not settle at home")
++                time.sleep(self._dt)
++        except Exception:
++            # Retain the last bounded target without another blocking CAN read.
++            # A timeout must never jump straight to zero or delay disable again.
++            self._qd_target[:] = 0.0
++            raise
++        finally:
++            self._vlim_override = previous_vlim
+ 
+     def move_to_ik(
+         self,
+@@ -331,9 +364,8 @@ class RebotArmEndPose:
+                     q_now = self._arm_group.get_positions(request_feedback=False)
+                     q_now = pad_q_for_model(self._model, q_now, self._n)
+                     tau_ff = compute_generalized_gravity(self._model, q_now, self._data)[: self._n]
+-                    tau_ff[1] *= 1.55  # joint2 额外补偿
+-                    tau_ff[2] *= 1.55  # joint3 额外补偿
+-                    
++                    tau_ff = tau_ff * self._gravity_ff_scale
++
+                 self._arm_group.send_mit(
+                     self._q_target,
+                     vel=self._qd_target,
+diff --git a/tests/test_gravity_scale_and_loop_stats.py b/tests/test_gravity_scale_and_loop_stats.py
+new file mode 100644
+index 0000000..2b23a66
+--- /dev/null
++++ b/tests/test_gravity_scale_and_loop_stats.py
+@@ -0,0 +1,83 @@
++import unittest
++from types import SimpleNamespace
++from unittest.mock import Mock, patch
++
++import numpy as np
++
++from reBotArm_control_py.actuator.rebotarm import RebotArm, _LoopStats
++from reBotArm_control_py.controllers import RebotArmEndPose
++import reBotArm_control_py.controllers.rebotarm_endpose_controller as endpose
++
++
++def arm_group(n):
++    group = Mock()
++    group.num_joints = n
++    group._mit_kp = np.full(n, 50.0)
++    group._mit_kd = np.full(n, 3.0)
++    group.get_positions.return_value = np.zeros(n)
++    return group
++
++
++def controller(n, **kwargs):
++    group = arm_group(n)
++    robot = SimpleNamespace(groups={"arm": group}, has_gripper=False)
++    with patch.object(endpose, "load_robot_model", return_value=Mock()), \
++            patch.object(endpose, "get_end_effector_frame_id", return_value=0):
++        c = RebotArmEndPose(robot, arm_control_mode="mit", **kwargs)
++    c._data = Mock()
++    return c, group
++
++
++class GravityScaleTest(unittest.TestCase):
++    def test_default_keeps_upstream_joint2_joint3_factor(self):
++        c, _ = controller(6)
++        self.assertEqual(c._gravity_ff_scale.tolist(), [1, 1.55, 1.55, 1, 1, 1])
++
++    def test_configured_scale_is_applied_to_model_gravity(self):
++        c, group = controller(6, gravity_ff_scale=[1, 1, 1, 1, 1, 1])
++        gravity = np.array([0.0, 1.5, 6.8, 2.0, 0.0, 0.0, 0.0, 0.0])
++        with patch.object(endpose, "compute_generalized_gravity", return_value=gravity), \
++                patch.object(endpose, "pad_q_for_model", side_effect=lambda m, q, n: q):
++            c._loop_cb(None, 0.01)
++        tau = group.send_mit.call_args.kwargs["tau"]
++        self.assertEqual(tau.tolist(), [0.0, 1.5, 6.8, 2.0, 0.0, 0.0])
++
++    def test_invalid_scale_is_rejected(self):
++        for scale in ([1, 1], [1, 1, float("nan"), 1, 1, 1], [1, -0.1, 1, 1, 1, 1]):
++            with self.assertRaises(ValueError):
++                controller(6, gravity_ff_scale=scale)
++
++    def test_single_joint_default_does_not_index_missing_joints(self):
++        c, _ = controller(1, use_gravity_ff=False)
++        self.assertEqual(c._gravity_ff_scale.tolist(), [1])
++
++
++class LoopStatsTest(unittest.TestCase):
++    def test_records_callback_time_period_and_overruns(self):
++        stats = _LoopStats(0.01)
++        stats.record(0.000, 0.004)
++        stats.record(0.010, 0.012)
++        stats.record(0.022, 0.005)
++        out = stats.snapshot()
++        self.assertEqual(out["iterations"], 3)
++        self.assertEqual(out["overruns"], 1)
++        self.assertAlmostEqual(out["callback_max_s"], 0.012)
++        self.assertAlmostEqual(out["period_mean_s"], 0.011)
++        self.assertAlmostEqual(out["period_max_s"], 0.012)
++
++    def test_reset_starts_a_new_window_without_losing_the_period_chain(self):
++        stats = _LoopStats(0.01)
++        stats.record(0.0, 0.001)
++        stats.snapshot(reset=True)
++        stats.record(0.010, 0.001)
++        out = stats.snapshot()
++        self.assertEqual(out["iterations"], 1)
++        self.assertAlmostEqual(out["period_mean_s"], 0.010)
++
++    def test_robot_without_a_started_loop_reports_nothing(self):
++        r = object.__new__(RebotArm)
++        self.assertEqual(r.control_loop_stats(), {})
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_lifecycle_safety.py b/tests/test_lifecycle_safety.py
+new file mode 100644
+index 0000000..3c360bf
+--- /dev/null
++++ b/tests/test_lifecycle_safety.py
+@@ -0,0 +1,173 @@
++import threading
++import unittest
++from unittest.mock import Mock, patch
++
++import numpy as np
++
++from reBotArm_control_py.actuator import RebotArm
++from reBotArm_control_py.controllers import RebotArmEndPose
++import reBotArm_control_py.controllers.rebotarm_endpose_controller as endpose
++
++
++class Clock:
++    def __init__(self):
++        self.now = 0.0
++
++    def monotonic(self):
++        return self.now
++
++    def sleep(self, seconds):
++        self.now += seconds
++
++
++class SdkLifecycleTest(unittest.TestCase):
++    def robot(self):
++        r = object.__new__(RebotArm)
++        r._connected = True
++        r._running = False
++        r._ctrl_thread = None
++        r._motor_map = {name: Mock() for name in ("joint1", "joint2", "gripper")}
++        r._ctrl_map = {name: Mock() for name in ("robstride", "damiao")}
++        return r
++
++    def test_disable_attempts_every_motor_after_first_failure(self):
++        r = self.robot()
++        motors = list(r._motor_map.values())
++        motors[0].disable.side_effect = RuntimeError("missing ACK")
++        with self.assertRaisesRegex(RuntimeError, "joint1: missing ACK"):
++            r.disable_all()
++        for motor in motors:
++            motor.disable.assert_called_once()
++
++    def test_disable_failure_does_not_skip_bus_close(self):
++        r = self.robot()
++        controllers = list(r._ctrl_map.values())
++        r._motor_map["joint1"].disable.side_effect = RuntimeError("missing ACK")
++        with self.assertRaisesRegex(RuntimeError, "missing ACK"):
++            r.disconnect()
++        for controller in controllers:
++            controller.close.assert_called_once()
++            controller.shutdown.assert_not_called()
++        self.assertFalse(r._connected)
++
++    def test_first_bus_close_failure_does_not_skip_second_bus(self):
++        r = self.robot()
++        second = r._ctrl_map["damiao"]
++        r._ctrl_map["robstride"].close.side_effect = RuntimeError("close fault")
++        with self.assertRaisesRegex(RuntimeError, "close fault"):
++            r.disconnect()
++        second.close.assert_called_once()
++        self.assertTrue(r._connected)
++        self.assertEqual(list(r._ctrl_map), ["robstride"])
++
++    def test_live_thread_prevents_free_but_still_attempts_all_motor_disables(self):
++        r = self.robot()
++        motors = list(r._motor_map.values())
++        controllers = list(r._ctrl_map.values())
++        r._ctrl_thread = Mock()
++        r._ctrl_thread.is_alive.return_value = True
++        with self.assertRaisesRegex(RuntimeError, "still alive"):
++            r.disconnect()
++        for motor in motors:
++            motor.disable.assert_called_once()
++        for controller in controllers:
++            controller.close.assert_not_called()
++
++    def test_stop_does_not_silently_accept_a_live_thread(self):
++        r = self.robot()
++        r._ctrl_thread = Mock()
++        r._ctrl_thread.is_alive.return_value = True
++        with self.assertRaisesRegex(RuntimeError, "did not stop"):
++            r.stop_control_loop()
++        self.assertFalse(r._running)
++
++    def test_stop_does_not_join_its_own_thread(self):
++        r = self.robot()
++        r._ctrl_thread = threading.current_thread()
++        with self.assertRaisesRegex(RuntimeError, "join itself"):
++            r.stop_control_loop()
++
++
++class SdkHomeTest(unittest.TestCase):
++    def controller(self, position=0.1):
++        c = object.__new__(RebotArmEndPose)
++        c._running = True
++        c._n = 6
++        c._dt = 0.01
++        c._q_target = np.full(6, 3.0)
++        c._qd_target = np.full(6, 0.5)
++        c._vlim_override = np.full(6, 0.25)
++        c.rebotarm = Mock()
++        c.rebotarm.get_state.return_value = (np.full(6, position), np.zeros(6), np.zeros(6))
++        return c
++
++    def run_home(self, c, on_sleep=None, **kwargs):
++        clock = Clock()
++        self.last_sent_target = c._q_target.copy()
++        def sleep(seconds):
++            self.last_sent_target = c._q_target.copy()
++            if on_sleep is not None:
++                on_sleep()
++            clock.sleep(seconds)
++        with patch.object(endpose.time, "monotonic", clock.monotonic), \
++                patch.object(endpose.time, "sleep", sleep):
++            return c.safe_home(**kwargs)
++
++    def test_trajectory_timeout_keeps_last_target_without_extra_can_read(self):
++        c = self.controller()
++        previous = c._vlim_override
++        with self.assertRaisesRegex(TimeoutError, "trajectory timed out"):
++            self.run_home(c, timeout=0.05)
++        np.testing.assert_array_equal(c._q_target, self.last_sent_target)
++        self.assertTrue(np.all(c._q_target > 0))
++        c.rebotarm.get_state.assert_called_once()
++        np.testing.assert_allclose(c._qd_target, 0.0)
++        self.assertIs(c._vlim_override, previous)
++
++    def test_settling_timeout_is_reported(self):
++        c = self.controller()
++        previous = c._vlim_override
++        with self.assertRaisesRegex(TimeoutError, "did not settle"):
++            self.run_home(c)
++        np.testing.assert_array_equal(c._q_target, self.last_sent_target)
++        self.assertIs(c._vlim_override, previous)
++
++    def test_disable_interrupts_home_without_late_feedback_reads(self):
++        c = self.controller()
++        with self.assertRaisesRegex(InterruptedError, "stopped"):
++            self.run_home(c, on_sleep=lambda: setattr(c, "_running", False))
++        c.rebotarm.get_state.assert_called_once()
++        np.testing.assert_array_equal(c._q_target, self.last_sent_target)
++
++    def test_not_running_is_not_reported_as_homing_success(self):
++        c = self.controller()
++        c._running = False
++        with self.assertRaisesRegex(RuntimeError, "not running"):
++            self.run_home(c)
++        c.rebotarm.get_state.assert_not_called()
++
++    def test_success_restores_velocity_limits(self):
++        c = self.controller()
++        previous = c._vlim_override
++        zero = (np.zeros(6), np.zeros(6), np.zeros(6))
++        c.rebotarm.get_state.side_effect = [c.rebotarm.get_state.return_value, zero]
++        self.run_home(c)
++        np.testing.assert_allclose(c._q_target, 0.0)
++        self.assertIs(c._vlim_override, previous)
++
++    def test_already_at_home_does_not_retain_old_motion_target(self):
++        c = self.controller(position=0.005)
++        self.run_home(c)
++        np.testing.assert_allclose(c._q_target, 0.005)
++        np.testing.assert_allclose(c._qd_target, 0.0)
++
++    def test_invalid_limits_reject_before_reading(self):
++        for kwargs in ({"max_vel": 0}, {"send_freq": float("nan")}, {"timeout": -1}):
++            c = self.controller()
++            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
++                self.run_home(c, **kwargs)
++            c.rebotarm.get_state.assert_not_called()
++
++
++if __name__ == "__main__":
++    unittest.main()

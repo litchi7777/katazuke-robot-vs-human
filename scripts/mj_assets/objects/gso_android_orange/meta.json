@@ -1,0 +1,44 @@
+{
+ "name_ja": "オレンジのドロイド人形",
+ "name_en": "orange android figure",
+ "gso_name": "Android_Figure_Orange",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.09,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.0594,
+  0.0459,
+  0.0806
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  55,
+  119,
+  244
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1388,
+ "collision_mass_split": [
+  0.0343,
+  0.0814,
+  0.0682,
+  0.0181,
+  0.055,
+  0.0342,
+  0.0231,
+  0.0755,
+  0.057,
+  0.0361,
+  0.0055,
+  0.0726,
+  0.1436,
+  0.0845,
+  0.0246,
+  0.1863
+ ]
+}

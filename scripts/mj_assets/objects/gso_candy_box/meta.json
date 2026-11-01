@@ -1,0 +1,44 @@
+{
+ "name_ja": "キャンディーの空き箱",
+ "name_en": "empty candy box",
+ "gso_name": "Nestle_Nips_Hard_Candy_Peanut_Butter",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "trash",
+ "mass_kg": 0.025,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1532,
+  0.0883,
+  0.0424
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  120,
+  165,
+  197
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 476,
+ "collision_mass_split": [
+  0.0372,
+  0.0244,
+  0.0289,
+  0.0655,
+  0.0176,
+  0.2585,
+  0.0567,
+  0.0081,
+  0.0088,
+  0.0479,
+  0.0143,
+  0.0239,
+  0.1655,
+  0.0427,
+  0.0694,
+  0.1305
+ ]
+}

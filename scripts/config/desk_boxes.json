@@ -1,0 +1,42 @@
+{
+ "keep": {
+  "xy": [
+   -0.3,
+   -0.25
+  ],
+  "rim_z": 0.055,
+  "size": [
+   0.25,
+   0.25
+  ],
+  "drop_q": [
+   2.4508,
+   2.1824,
+   2.0903,
+   -1.4786,
+   0.0,
+   0.0039
+  ],
+  "note": "white box beside the desk, behind-right; drop pose confirmed by eye 2026-10-28; rim 5.5 cm ABOVE the desk top (user; was wrongly stored as -0.055 until 2026-10-27)"
+ },
+ "trash": {
+  "xy": [
+   -0.244,
+   0.353
+  ],
+  "rim_z": 0.145,
+  "size": [
+   0.14,
+   0.3
+  ],
+  "drop_q": [
+   -2.175,
+   1.8457,
+   1.9552,
+   -1.2283,
+   -0.009,
+   -0.0104
+  ],
+  "note": "blue bin beside the desk, behind-left; drop pose taught by hand 2026-10-28; opening 14 x 30 cm; rim 14.5 cm ABOVE the desk top (user; was wrongly stored as -0.145 until 2026-10-27)"
+ }
+}

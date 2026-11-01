@@ -1,0 +1,44 @@
+{
+ "name_ja": "USBメモリ",
+ "name_en": "USB stick",
+ "gso_name": "Kingston_DT4000MR_G2_Management_Ready_USB_64GB",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.01,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.0794,
+  0.0219,
+  0.0129
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  60,
+  56,
+  55
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 2 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 622,
+ "collision_mass_split": [
+  0.0088,
+  0.0259,
+  0.099,
+  0.0236,
+  0.0069,
+  0.0523,
+  0.0129,
+  0.0454,
+  0.0567,
+  0.174,
+  0.2291,
+  0.0424,
+  0.0648,
+  0.0362,
+  0.0939,
+  0.0283
+ ]
+}

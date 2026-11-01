@@ -1,0 +1,44 @@
+{
+ "name_ja": "輪っか積みのおもちゃ",
+ "name_en": "stacking rings toy",
+ "gso_name": "STACKING_RING",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.2,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.0796,
+  0.079,
+  0.1874
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  116,
+  129,
+  160
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1104,
+ "collision_mass_split": [
+  0.0734,
+  0.0973,
+  0.0867,
+  0.0148,
+  0.0153,
+  0.0254,
+  0.0218,
+  0.0408,
+  0.0398,
+  0.0122,
+  0.0106,
+  0.0412,
+  0.0527,
+  0.053,
+  0.0697,
+  0.3452
+ ]
+}

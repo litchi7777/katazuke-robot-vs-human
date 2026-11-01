@@ -1,0 +1,44 @@
+{
+ "name_ja": "懐中電灯",
+ "name_en": "flashlight",
+ "gso_name": "HeavyDuty_Flashlight",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.25,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.2324,
+  0.0759,
+  0.0755
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  98,
+  93,
+  112
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 4 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 912,
+ "collision_mass_split": [
+  0.071,
+  0.0675,
+  0.0535,
+  0.0771,
+  0.0149,
+  0.0333,
+  0.0045,
+  0.0105,
+  0.0058,
+  0.0488,
+  0.188,
+  0.1093,
+  0.1305,
+  0.0115,
+  0.1055,
+  0.0681
+ ]
+}

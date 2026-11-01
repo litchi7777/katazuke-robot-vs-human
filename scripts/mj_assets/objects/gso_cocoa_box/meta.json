@@ -1,0 +1,44 @@
+{
+ "name_ja": "ココアの箱",
+ "name_en": "box of cocoa capsules",
+ "gso_name": "Swiss_Miss_Hot_Cocoa_KCups_Milk_Chocolate_12_count",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.3,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1508,
+  0.1006,
+  0.099
+ ],
+ "graspable_guess": false,
+ "split": "test",
+ "mean_bgr": [
+  189,
+  169,
+  157
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 648,
+ "collision_mass_split": [
+  0.109,
+  0.0032,
+  0.026,
+  0.1323,
+  0.0314,
+  0.0031,
+  0.2633,
+  0.1305,
+  0.028,
+  0.0341,
+  0.012,
+  0.0347,
+  0.0498,
+  0.0298,
+  0.0597,
+  0.053
+ ]
+}

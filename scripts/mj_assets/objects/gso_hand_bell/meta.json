@@ -1,0 +1,44 @@
+{
+ "name_ja": "真鍮のハンドベル",
+ "name_en": "brass hand bell",
+ "gso_name": "Cole_Hardware_School_Bell_Solid_Brass_38",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.38,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.0828,
+  0.0827,
+  0.1596
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  92,
+  130,
+  152
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1078,
+ "collision_mass_split": [
+  0.0331,
+  0.0684,
+  0.022,
+  0.0203,
+  0.0231,
+  0.0218,
+  0.0146,
+  0.021,
+  0.011,
+  0.0183,
+  0.1985,
+  0.0473,
+  0.0272,
+  0.0298,
+  0.0443,
+  0.3993
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "name_ja": "クレヨンの箱",
+ "name_en": "box of crayons",
+ "gso_name": "Crayola_Crayons_24_count",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.11,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1162,
+  0.073,
+  0.0296
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  57,
+  140,
+  149
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 468,
+ "collision_mass_split": [
+  0.0483,
+  0.0073,
+  0.0,
+  0.0017,
+  0.0399,
+  0.2988,
+  0.0298,
+  0.0001,
+  0.042,
+  0.1175,
+  0.0033,
+  0.0431,
+  0.2919,
+  0.0356,
+  0.0354,
+  0.0053
+ ]
+}

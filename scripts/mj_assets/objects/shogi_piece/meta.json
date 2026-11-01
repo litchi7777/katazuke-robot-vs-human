@@ -1,0 +1,16 @@
+{
+ "name_ja": "将棋の駒",
+ "category": "keep",
+ "mass_kg": 0.004,
+ "friction": 0.5,
+ "soft": false,
+ "source_image": "c4_00_video4.jpg",
+ "method": "procedural pentagonal wedge, photo-sampled wood colour",
+ "size_m": [
+  0.03,
+  0.026,
+  0.008
+ ],
+ "visual_faces": 16,
+ "collision_faces": 16
+}

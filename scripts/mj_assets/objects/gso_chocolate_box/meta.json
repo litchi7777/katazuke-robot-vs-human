@@ -1,0 +1,44 @@
+{
+ "name_ja": "チョコレートの空き箱",
+ "name_en": "empty chocolate box",
+ "gso_name": "Nestle_Raisinets_Milk_Chocolate_35_oz_992_g",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "trash",
+ "mass_kg": 0.025,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.162,
+  0.0821,
+  0.0205
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  111,
+  175,
+  195
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 3 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 482,
+ "collision_mass_split": [
+  0.0823,
+  0.0039,
+  0.0245,
+  0.1254,
+  0.0051,
+  0.0037,
+  0.1605,
+  0.0061,
+  0.0255,
+  0.0,
+  0.2261,
+  0.0227,
+  0.2201,
+  0.0629,
+  0.0028,
+  0.0284
+ ]
+}

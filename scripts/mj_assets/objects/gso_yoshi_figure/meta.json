@@ -1,0 +1,44 @@
+{
+ "name_ja": "ヨッシーのフィギュア",
+ "name_en": "Yoshi figure",
+ "gso_name": "Nintendo_Yoshi_Action_Figure",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.09,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.0637,
+  0.0631,
+  0.1129
+ ],
+ "graspable_guess": true,
+ "split": "test",
+ "mean_bgr": [
+  74,
+  179,
+  164
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1360,
+ "collision_mass_split": [
+  0.0361,
+  0.0745,
+  0.0391,
+  0.0283,
+  0.0464,
+  0.013,
+  0.0088,
+  0.0194,
+  0.0847,
+  0.0138,
+  0.0237,
+  0.0194,
+  0.0141,
+  0.3099,
+  0.0179,
+  0.2509
+ ]
+}

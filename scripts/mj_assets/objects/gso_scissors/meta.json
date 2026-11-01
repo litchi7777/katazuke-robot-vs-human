@@ -1,0 +1,44 @@
+{
+ "name_ja": "赤いハサミ",
+ "name_en": "red scissors",
+ "gso_name": "Diamond_Visions_Scissors_Red",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.07,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.2085,
+  0.0764,
+  0.0146
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  85,
+  92,
+  151
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 2 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 654,
+ "collision_mass_split": [
+  0.0196,
+  0.0642,
+  0.0791,
+  0.1009,
+  0.0368,
+  0.0606,
+  0.0333,
+  0.011,
+  0.0161,
+  0.0487,
+  0.0547,
+  0.0493,
+  0.0742,
+  0.0999,
+  0.0814,
+  0.1701
+ ]
+}

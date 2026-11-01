@@ -1,0 +1,44 @@
+{
+ "name_ja": "トリケラトプスのおもちゃ",
+ "name_en": "triceratops toy",
+ "gso_name": "Great_Dinos_Triceratops_Toy",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.08,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.0694,
+  0.0459,
+  0.0792
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  62,
+  204,
+  143
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1520,
+ "collision_mass_split": [
+  0.0816,
+  0.1063,
+  0.0216,
+  0.0925,
+  0.0189,
+  0.0163,
+  0.0764,
+  0.0006,
+  0.0797,
+  0.0342,
+  0.0237,
+  0.0667,
+  0.1021,
+  0.0358,
+  0.1482,
+  0.0955
+ ]
+}

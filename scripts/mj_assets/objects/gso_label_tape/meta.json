@@ -1,0 +1,44 @@
+{
+ "name_ja": "ラベルテープ",
+ "name_en": "label tape cartridge",
+ "gso_name": "Epson_LabelWorks_LC4WBN9_Tape_reel_labels_047_x_295_Roll_Black_on_White",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.03,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.123,
+  0.0881,
+  0.0407
+ ],
+ "graspable_guess": false,
+ "split": "battle",
+ "mean_bgr": [
+  180,
+  151,
+  123
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 618,
+ "collision_mass_split": [
+  0.0065,
+  0.014,
+  0.0101,
+  0.0413,
+  0.1072,
+  0.0464,
+  0.0784,
+  0.0093,
+  0.0191,
+  0.0204,
+  0.133,
+  0.0089,
+  0.1789,
+  0.0346,
+  0.1708,
+  0.1211
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "name_ja": "白いシリアルボウル",
+ "name_en": "white cereal bowl",
+ "gso_name": "Threshold_Bead_Cereal_Bowl_White",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.35,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.1692,
+  0.1658,
+  0.0712
+ ],
+ "graspable_guess": false,
+ "split": "battle",
+ "mean_bgr": [
+  223,
+  221,
+  216
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1700,
+ "collision_mass_split": [
+  0.0359,
+  0.0379,
+  0.0284,
+  0.0522,
+  0.0127,
+  0.0411,
+  0.0535,
+  0.0422,
+  0.0375,
+  0.058,
+  0.0835,
+  0.0714,
+  0.1053,
+  0.1211,
+  0.101,
+  0.1185
+ ]
+}

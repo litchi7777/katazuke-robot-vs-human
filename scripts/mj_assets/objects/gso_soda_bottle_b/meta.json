@@ -1,0 +1,44 @@
+{
+ "name_ja": "ジュースの空き瓶",
+ "name_en": "empty soda bottle",
+ "gso_name": "Weston_No_33_Signature_Sausage_Tonic_12_fl_oz",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "trash",
+ "mass_kg": 0.2,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.063,
+  0.0626,
+  0.1978
+ ],
+ "graspable_guess": true,
+ "split": "test",
+ "mean_bgr": [
+  81,
+  121,
+  136
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 2 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 996,
+ "collision_mass_split": [
+  0.026,
+  0.0047,
+  0.0081,
+  0.0101,
+  0.0158,
+  0.0058,
+  0.0162,
+  0.0933,
+  0.0773,
+  0.1891,
+  0.0095,
+  0.1124,
+  0.0169,
+  0.1045,
+  0.0614,
+  0.2488
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "name_ja": "ガムのパック",
+ "name_en": "pack of gum bottles",
+ "gso_name": "Orbit_Bubblemint_Mini_Bottle_6_ct",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.05,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.2102,
+  0.0695,
+  0.1193
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  172,
+  141,
+  180
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 600,
+ "collision_mass_split": [
+  0.0104,
+  0.016,
+  0.0284,
+  0.0198,
+  0.0082,
+  0.0162,
+  0.0091,
+  0.1892,
+  0.326,
+  0.0414,
+  0.0382,
+  0.042,
+  0.0762,
+  0.0236,
+  0.0312,
+  0.1242
+ ]
+}

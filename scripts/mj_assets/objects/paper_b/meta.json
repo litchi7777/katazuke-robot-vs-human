@@ -1,0 +1,17 @@
+{
+ "name_ja": "くしゃくしゃの紙（右）",
+ "category": "trash",
+ "mass_kg": 0.004,
+ "friction": 0.8,
+ "soft": true,
+ "source_image": "scene.jpg",
+ "method": "hunyuan3d-2.1 shape (top half kept) + paint, texture whitened",
+ "size_m": [
+  0.075,
+  0.0695,
+  0.0381
+ ],
+ "visual_faces": 12000,
+ "collision_faces": 92,
+ "source_crop": "source_crop.png"
+}

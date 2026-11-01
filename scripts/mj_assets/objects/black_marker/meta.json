@@ -1,0 +1,17 @@
+{
+ "name_ja": "黒マーカー",
+ "category": "keep",
+ "mass_kg": 0.01,
+ "friction": 0.5,
+ "soft": false,
+ "source_image": "scene.jpg",
+ "method": "photo silhouette revolved, photo texture",
+ "size_m": [
+  0.134,
+  0.0151,
+  0.0151
+ ],
+ "visual_faces": 5040,
+ "collision_faces": 92,
+ "source_crop": "source_crop.png"
+}

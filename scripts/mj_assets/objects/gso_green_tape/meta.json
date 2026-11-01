@@ -1,0 +1,44 @@
+{
+ "name_ja": "緑のビニールテープ",
+ "name_en": "green vinyl tape",
+ "gso_name": "3M_Vinyl_Tape_Green_1_x_36_yd",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.06,
+ "friction": 0.7,
+ "soft": false,
+ "size_m": [
+  0.1107,
+  0.1104,
+  0.0267
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  128,
+  169,
+  116
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 692,
+ "collision_mass_split": [
+  0.0812,
+  0.0114,
+  0.0315,
+  0.0509,
+  0.134,
+  0.0074,
+  0.0197,
+  0.0765,
+  0.0059,
+  0.1058,
+  0.0224,
+  0.0252,
+  0.1192,
+  0.1205,
+  0.0936,
+  0.0947
+ ]
+}

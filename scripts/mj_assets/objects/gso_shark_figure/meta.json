@@ -1,0 +1,44 @@
+{
+ "name_ja": "サメのフィギュア",
+ "name_en": "shark figure",
+ "gso_name": "Weisshai_Great_White_Shark",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.09,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.1678,
+  0.1142,
+  0.0746
+ ],
+ "graspable_guess": true,
+ "split": "test",
+ "mean_bgr": [
+  136,
+  148,
+  145
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 2 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1000,
+ "collision_mass_split": [
+  0.0267,
+  0.0139,
+  0.0929,
+  0.0117,
+  0.0099,
+  0.0065,
+  0.0143,
+  0.004,
+  0.0174,
+  0.0877,
+  0.0107,
+  0.1086,
+  0.0302,
+  0.313,
+  0.0359,
+  0.2167
+ ]
+}

@@ -1,0 +1,13 @@
+repositories:
+  rebotarm_ros2:
+    type: git
+    url: https://github.com/Seeed-Projects/reBotArmController_ROS2.git
+    version: 7506dc0fc5c2a7787dcb974d89d13f9f49d16d61
+  rebotarm_ros2/third_party/reBotArm_control_py:
+    type: git
+    url: https://github.com/vectorBH6/reBotArm_control_py.git
+    version: 40ab6ce58fec3c58cb603efb3f30240d6f5849e4
+  third_party/motorbridge:
+    type: git
+    url: https://github.com/motorbridge/motorbridge.git
+    version: c652ce420e7da1008fa1864cc7f47d7d7c57fdb6

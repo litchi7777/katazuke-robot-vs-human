@@ -1,0 +1,44 @@
+{
+ "name_ja": "カードゲームの箱",
+ "name_en": "card game box",
+ "gso_name": "Mad_Gab_Refresh_Card_Game",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.15,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1561,
+  0.1559,
+  0.1557
+ ],
+ "graspable_guess": false,
+ "split": "battle",
+ "mean_bgr": [
+  115,
+  121,
+  155
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 446,
+ "collision_mass_split": [
+  0.0049,
+  0.1023,
+  0.1326,
+  0.0479,
+  0.0069,
+  0.0012,
+  0.0035,
+  0.0154,
+  0.1269,
+  0.474,
+  0.0024,
+  0.0026,
+  0.0087,
+  0.0027,
+  0.0658,
+  0.0022
+ ]
+}

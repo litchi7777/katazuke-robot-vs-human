@@ -1,0 +1,44 @@
+{
+ "name_ja": "コーヒースティックの空き箱",
+ "name_en": "empty coffee stick box",
+ "gso_name": "NESCAFE_NESCAFE_TC_STKS_DECAF_6_CT",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "trash",
+ "mass_kg": 0.02,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1308,
+  0.0783,
+  0.0287
+ ],
+ "graspable_guess": false,
+ "split": "test",
+ "mean_bgr": [
+  90,
+  123,
+  83
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 500,
+ "collision_mass_split": [
+  0.0132,
+  0.0634,
+  0.0611,
+  0.0139,
+  0.0034,
+  0.0037,
+  0.1262,
+  0.0086,
+  0.2187,
+  0.1518,
+  0.0514,
+  0.0777,
+  0.0245,
+  0.0923,
+  0.0204,
+  0.0698
+ ]
+}

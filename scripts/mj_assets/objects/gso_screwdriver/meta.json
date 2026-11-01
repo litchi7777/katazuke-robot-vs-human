@@ -1,0 +1,44 @@
+{
+ "name_ja": "ドライバー",
+ "name_en": "screwdriver",
+ "gso_name": "Craftsman_Grip_Screwdriver_Phillips_Cushion",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.12,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.2611,
+  0.0365,
+  0.0341
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  84,
+  74,
+  73
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 28 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 572,
+ "collision_mass_split": [
+  0.0047,
+  0.048,
+  0.0547,
+  0.0442,
+  0.0097,
+  0.1087,
+  0.0128,
+  0.0133,
+  0.0384,
+  0.0559,
+  0.0361,
+  0.1298,
+  0.1523,
+  0.1198,
+  0.1049,
+  0.0666
+ ]
+}

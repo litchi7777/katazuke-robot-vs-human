@@ -1,0 +1,44 @@
+{
+ "name_ja": "ゴムの犬用おもちゃ",
+ "name_en": "pink rubber dog toy",
+ "gso_name": "Kong_Puppy_Teething_Rubber_Small_Pink",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.05,
+ "friction": 0.9,
+ "soft": false,
+ "size_m": [
+  0.0443,
+  0.0443,
+  0.0719
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  170,
+  139,
+  215
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1736,
+ "collision_mass_split": [
+  0.0349,
+  0.031,
+  0.0014,
+  0.0009,
+  0.0545,
+  0.0105,
+  0.0265,
+  0.0852,
+  0.0364,
+  0.0702,
+  0.1973,
+  0.0291,
+  0.0762,
+  0.0649,
+  0.1007,
+  0.1802
+ ]
+}

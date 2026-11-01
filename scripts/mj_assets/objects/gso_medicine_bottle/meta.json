@@ -1,0 +1,44 @@
+{
+ "name_ja": "胃腸薬のボトル",
+ "name_en": "medicine bottle",
+ "gso_name": "Phillips_Milk_of_Magnesia_Saline_Laxative_Liquid_Original",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.35,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.0727,
+  0.0568,
+  0.1741
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  238,
+  116,
+  141
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 948,
+ "collision_mass_split": [
+  0.0368,
+  0.0469,
+  0.0079,
+  0.0501,
+  0.0194,
+  0.0186,
+  0.0083,
+  0.0114,
+  0.0252,
+  0.0379,
+  0.1541,
+  0.0598,
+  0.0285,
+  0.114,
+  0.0792,
+  0.3021
+ ]
+}

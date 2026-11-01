@@ -1,0 +1,44 @@
+{
+ "name_ja": "ゲームソフトのケース",
+ "name_en": "game case",
+ "gso_name": "Mario_Luigi_Dream_Team_Nintendo_3DS_Game",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.04,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1375,
+  0.1251,
+  0.0163
+ ],
+ "graspable_guess": false,
+ "split": "battle",
+ "mean_bgr": [
+  184,
+  180,
+  175
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 0 deg)",
+ "visual_faces": 2536,
+ "collision_parts": 16,
+ "collision_faces": 544,
+ "collision_mass_split": [
+  0.0282,
+  0.0177,
+  0.0084,
+  0.0038,
+  0.0069,
+  0.0067,
+  0.0104,
+  0.6081,
+  0.047,
+  0.0009,
+  0.011,
+  0.1271,
+  0.0292,
+  0.0448,
+  0.0398,
+  0.0099
+ ]
+}

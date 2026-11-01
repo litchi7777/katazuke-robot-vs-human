@@ -1,0 +1,44 @@
+{
+ "name_ja": "カメラのレンズ",
+ "name_en": "camera lens",
+ "gso_name": "Nikon_1_AW1_w11275mm_Lens_Silver",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.35,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.0627,
+  0.0627,
+  0.0788
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  158,
+  160,
+  156
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1176,
+ "collision_mass_split": [
+  0.0638,
+  0.0247,
+  0.0149,
+  0.0107,
+  0.004,
+  0.0051,
+  0.0276,
+  0.0113,
+  0.0097,
+  0.0016,
+  0.1619,
+  0.1679,
+  0.1407,
+  0.2184,
+  0.0399,
+  0.098
+ ]
+}

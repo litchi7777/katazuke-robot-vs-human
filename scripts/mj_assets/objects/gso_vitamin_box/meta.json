@@ -1,0 +1,44 @@
+{
+ "name_ja": "ビタミン剤の小箱",
+ "name_en": "small vitamin box",
+ "gso_name": "YumYum_D3_Liquid",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.06,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.0343,
+  0.0333,
+  0.1001
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  71,
+  140,
+  190
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 614,
+ "collision_mass_split": [
+  0.1339,
+  0.0192,
+  0.0541,
+  0.0058,
+  0.0175,
+  0.0241,
+  0.022,
+  0.0627,
+  0.0272,
+  0.01,
+  0.0271,
+  0.0743,
+  0.0144,
+  0.1781,
+  0.2655,
+  0.0642
+ ]
+}

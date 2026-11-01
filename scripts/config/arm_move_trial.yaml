@@ -1,0 +1,42 @@
+# All six arm motors (ID 1-6) are enabled and hold; the client moves one joint
+# in small steps. The gripper (ID 7) is never registered or enabled.
+# Larger moves for the shogi tidy-up: folded <-> ready <-> hover above the near
+# rows of the board, gripper pointing down. Limits cover only those poses.
+default_model: rs
+models:
+  rs:
+    sdk_config: rebotarm_rs.yaml
+    overrides:
+      name: reBotArm-RS-arm-move-trial
+      arm_hold_trial: true
+      channel: can0
+      rate: 100
+      urdf_path: package://rebotarm_bringup/description/RS/urdf/ReBot_Arm_RS.urdf
+      end_effector_frame: gripper_end
+      groups:
+        arm:
+          joints: [joint1, joint2, joint3, joint4, joint5, joint6]
+      control:
+        arm_control_mode: mit
+        # Same gains as the standard RS driver configuration.
+        mit_kp: [50.0, 150.0, 150.0, 50.0, 50.0, 50.0]
+        mit_kd: [3.0, 10.0, 10.0, 5.0, 4.0, 4.0]
+      # Model gravity without the upstream 1.55x on joint2/joint3. On 10/02 the
+      # 1.55x lifted joint3 by +0.025 rad at the folded pose, which matches
+      # 0.55 * 6.76 N*m / kp 150; i.e. the URDF gravity is about right.
+      # If the model underestimates gravity, 1.0 sags toward the folded rest.
+      gravity_ff_scale: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+      # Driver-side bounds for targets and for enabling (rad). Folded pose is 0.
+      arm_hold_trial_position_limits:
+        joint1: [-0.50, 0.50]
+        joint2: [-0.05, 2.20]
+        joint3: [-0.05, 2.00]
+        joint4: [-1.50, 0.12]
+        joint5: [-0.20, 0.20]
+        joint6: [-0.45, 0.45]
+      # 10/25: kp 50 left 0.01-0.02 rad of friction residual on joint1.
+      safe_home_settle_rad: 0.02
+      # Required by the common config validator; no gripper is registered.
+      gripper:
+        position_limits: {open: 2.7, close: 0.0}
+      gravity_compensation: {kp: 2.0, kd: 1.0}

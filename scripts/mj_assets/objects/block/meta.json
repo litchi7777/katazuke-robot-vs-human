@@ -1,0 +1,16 @@
+{
+ "name_ja": "木製ブロック",
+ "category": "keep",
+ "mass_kg": 0.012,
+ "friction": 0.6,
+ "soft": false,
+ "source_image": "c4_00_video0.jpg",
+ "method": "procedural box, photo-sampled wood colour",
+ "size_m": [
+  0.035,
+  0.03,
+  0.02
+ ],
+ "visual_faces": 12,
+ "collision_faces": 12
+}

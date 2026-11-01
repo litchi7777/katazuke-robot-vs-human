@@ -1,0 +1,44 @@
+{
+ "name_ja": "フライ返し",
+ "name_en": "spatula",
+ "gso_name": "OXO_Cookie_Spatula",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.06,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.2397,
+  0.0679,
+  0.0245
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  139,
+  84,
+  106
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 648,
+ "collision_mass_split": [
+  0.0309,
+  0.1071,
+  0.0141,
+  0.032,
+  0.0156,
+  0.0276,
+  0.0555,
+  0.0167,
+  0.0169,
+  0.0767,
+  0.0434,
+  0.3313,
+  0.0192,
+  0.0256,
+  0.1603,
+  0.027
+ ]
+}

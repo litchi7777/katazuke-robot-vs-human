@@ -1,0 +1,44 @@
+{
+ "name_ja": "スポンジ",
+ "name_en": "sponge",
+ "gso_name": "Big_O_Sponges_Assorted_Cellulose_12_pack",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.015,
+ "friction": 0.9,
+ "soft": true,
+ "size_m": [
+  0.1262,
+  0.0698,
+  0.0191
+ ],
+ "graspable_guess": true,
+ "split": "test",
+ "mean_bgr": [
+  199,
+  124,
+  158
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 516,
+ "collision_mass_split": [
+  0.0281,
+  0.0133,
+  0.0066,
+  0.0112,
+  0.0023,
+  0.0625,
+  0.2039,
+  0.0113,
+  0.2034,
+  0.0491,
+  0.0903,
+  0.0666,
+  0.0572,
+  0.1243,
+  0.0245,
+  0.0457
+ ]
+}

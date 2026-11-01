@@ -1,0 +1,44 @@
+{
+ "name_ja": "お菓子の空き箱",
+ "name_en": "empty snack box",
+ "gso_name": "Nestle_Skinny_Cow_Dreamy_Clusters_Candy_Dark_Chocolate_6_pack_1_oz_pouches",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "trash",
+ "mass_kg": 0.03,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1643,
+  0.1377,
+  0.0588
+ ],
+ "graspable_guess": false,
+ "split": "test",
+ "mean_bgr": [
+  212,
+  194,
+  204
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 560,
+ "collision_mass_split": [
+  0.0143,
+  0.0972,
+  0.0219,
+  0.035,
+  0.0159,
+  0.0239,
+  0.0462,
+  0.0712,
+  0.0544,
+  0.0585,
+  0.0357,
+  0.0274,
+  0.0336,
+  0.0458,
+  0.2559,
+  0.1631
+ ]
+}

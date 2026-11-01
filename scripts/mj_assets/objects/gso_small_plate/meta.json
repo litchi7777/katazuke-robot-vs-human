@@ -1,0 +1,44 @@
+{
+ "name_ja": "とんぼ柄の小皿",
+ "name_en": "small dragonfly saucer",
+ "gso_name": "Kotobuki_Saucer_Dragon_Fly",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.12,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.0966,
+  0.0964,
+  0.0244
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  168,
+  178,
+  168
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1420,
+ "collision_mass_split": [
+  0.0453,
+  0.0269,
+  0.0804,
+  0.0471,
+  0.0638,
+  0.0351,
+  0.0475,
+  0.07,
+  0.0539,
+  0.0611,
+  0.0447,
+  0.0656,
+  0.0895,
+  0.1243,
+  0.0642,
+  0.0805
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "name_ja": "魚の缶詰の空き缶",
+ "name_en": "empty fish tin",
+ "gso_name": "Polar_Herring_Fillets_Smoked_Peppered_705_oz_total",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "trash",
+ "mass_kg": 0.04,
+ "friction": 0.4,
+ "soft": false,
+ "size_m": [
+  0.1504,
+  0.0837,
+  0.0264
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  105,
+  124,
+  148
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 4 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 712,
+ "collision_mass_split": [
+  0.0221,
+  0.0269,
+  0.0032,
+  0.0235,
+  0.0239,
+  0.0522,
+  0.0664,
+  0.0612,
+  0.0605,
+  0.0667,
+  0.0809,
+  0.0053,
+  0.1153,
+  0.2158,
+  0.0827,
+  0.0933
+ ]
+}

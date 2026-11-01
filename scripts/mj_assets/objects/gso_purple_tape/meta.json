@@ -1,0 +1,44 @@
+{
+ "name_ja": "紫の布テープ",
+ "name_en": "purple tape roll",
+ "gso_name": "Shurtape_Tape_Purple_CP28",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.25,
+ "friction": 0.7,
+ "soft": false,
+ "size_m": [
+  0.1177,
+  0.1171,
+  0.0502
+ ],
+ "graspable_guess": false,
+ "split": "test",
+ "mean_bgr": [
+  189,
+  136,
+  151
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 718,
+ "collision_mass_split": [
+  0.0899,
+  0.0415,
+  0.1179,
+  0.0811,
+  0.0129,
+  0.0337,
+  0.0523,
+  0.0512,
+  0.0163,
+  0.0021,
+  0.1133,
+  0.0365,
+  0.0601,
+  0.1516,
+  0.0379,
+  0.1017
+ ]
+}

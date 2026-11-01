@@ -1,0 +1,44 @@
+{
+ "name_ja": "虫眼鏡",
+ "name_en": "magnifying glass",
+ "gso_name": "Magnifying_Glassassrt",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.06,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1514,
+  0.0604,
+  0.0171
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  93,
+  146,
+  107
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 556,
+ "collision_mass_split": [
+  0.0282,
+  0.0361,
+  0.0175,
+  0.0213,
+  0.0477,
+  0.0091,
+  0.0212,
+  0.0519,
+  0.2306,
+  0.0701,
+  0.1155,
+  0.0581,
+  0.0781,
+  0.0793,
+  0.0723,
+  0.063
+ ]
+}

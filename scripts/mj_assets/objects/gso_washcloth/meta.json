@@ -1,0 +1,44 @@
+{
+ "name_ja": "たたんだタオル",
+ "name_en": "folded washcloth",
+ "gso_name": "Home_Fashions_Washcloth_Olive_Green",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.06,
+ "friction": 0.9,
+ "soft": true,
+ "size_m": [
+  0.177,
+  0.1288,
+  0.0321
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  116,
+  158,
+  150
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 910,
+ "collision_mass_split": [
+  0.0835,
+  0.036,
+  0.0378,
+  0.0399,
+  0.1046,
+  0.0183,
+  0.0082,
+  0.0252,
+  0.0144,
+  0.0723,
+  0.0073,
+  0.1322,
+  0.1572,
+  0.0128,
+  0.1429,
+  0.1073
+ ]
+}

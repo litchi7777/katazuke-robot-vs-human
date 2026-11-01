@@ -1,0 +1,87 @@
+The gso_* objects in this folder are converted from Google Scanned Objects.
+
+Google Scanned Objects, licensed under CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+Downs, L., Francis, A., Koenig, N., Kinman, B., Hickman, R., Reymann, K., McHugh, T. B., Vanhoucke, V.
+"Google Scanned Objects: A High-Quality Dataset of 3D Scanned Household Items", ICRA 2022.
+https://research.google/blog/scanned-objects-by-google-research-a-dataset-of-3d-scanned-common-household-items/
+https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research
+MuJoCo conversion used as the source: https://github.com/kevinzakka/mujoco_scanned_objects
+
+Changes: re-posed (resting pose, long axis along +x, origin at the bottom centre), visual mesh decimated
+to <= 3000 faces, texture downscaled to 512 px / 256 colours, convex collision parts merged to <= 16
+and simplified (scripts/mj_assets/tools/import_gso.py). Masses and frictions are our estimates.
+
+Included models (folder <- GSO model name):
+  gso_alarm_clock <- Crosley_Alarm_Clock_Vintage_Metal
+  gso_android_orange <- Android_Figure_Orange
+  gso_android_panda <- Android_Figure_Panda
+  gso_bee_toy <- Fisher_price_Classic_Toys_Buzzy_Bee
+  gso_black_mouse <- Razer_Abyssus_Ambidextrous_Gaming_Mouse
+  gso_bunny_car <- BUNNY_RACER
+  gso_camera <- Nikon_1_AW1_w11275mm_Lens_Silver
+  gso_can_opener <- OXO_Soft_Works_Can_Opener_SnapLock
+  gso_candy_box <- Nestle_Nips_Hard_Candy_Peanut_Butter
+  gso_card_game <- Mad_Gab_Refresh_Card_Game
+  gso_cardboard_package <- Google_Cardboard_Original_package
+  gso_chocolate_box <- Nestle_Raisinets_Milk_Chocolate_35_oz_992_g
+  gso_cocoa_box <- Swiss_Miss_Hot_Cocoa_KCups_Milk_Chocolate_12_count
+  gso_coffee_stick_box <- NESCAFE_NESCAFE_TC_STKS_DECAF_6_CT
+  gso_crayon_box <- Crayola_Crayons_24_count
+  gso_cupcake_box <- Little_Debbie_Chocolate_Cupcakes_8_ct
+  gso_dishtowel <- Cole_Hardware_Dishtowel_Red
+  gso_fish_tin <- Polar_Herring_Fillets_Smoked_Peppered_705_oz_total
+  gso_flashlight <- HeavyDuty_Flashlight
+  gso_foam_dragon <- Animal_Planet_Foam_2Headed_Dragon
+  gso_fruit_snack_box <- Black_Forest_Fruit_Snacks_28_Pack_Grape
+  gso_game_case <- Mario_Luigi_Dream_Team_Nintendo_3DS_Game
+  gso_game_console <- Nintendo_2DS_Crimson_Red
+  gso_gloves <- Clorox_Premium_Choice_Gloves_SM_1_pair
+  gso_green_tape <- 3M_Vinyl_Tape_Green_1_x_36_yd
+  gso_gum_bottle <- Orbit_Bubblemint_Mini_Bottle_6_ct
+  gso_hammer <- Cole_Hardware_Hammer_Black
+  gso_hand_bell <- Cole_Hardware_School_Bell_Solid_Brass_38
+  gso_honey_dipper <- Cole_Hardware_Mini_Honey_Dipper
+  gso_label_tape <- Epson_LabelWorks_LC4WBN9_Tape_reel_labels_047_x_295_Roll_Black_on_White
+  gso_ladybug_toy <- LADYBUG_BEAD
+  gso_lego_figure <- Lego_Friends_Mia
+  gso_lion_figure <- Schleich_Lion_Action_Figure
+  gso_lotion_bottle <- Marc_Anthony_True_Professional_Strictly_Curls_Curl_Defining_Lotion
+  gso_magnifier <- Magnifying_Glassassrt
+  gso_mario_figure <- Nintendo_Mario_Action_Figure
+  gso_medicine_bottle <- Phillips_Milk_of_Magnesia_Saline_Laxative_Liquid_Original
+  gso_patterned_bowl <- Now_Designs_Bowl_Akita_Black
+  gso_pineapple_maraca <- PINEAPPLE_MARACA_6_PCSSET
+  gso_plant_cup <- Ecoforms_Cup_B4_SAN
+  gso_purple_tape <- Shurtape_Tape_Purple_CP28
+  gso_ramekin <- Threshold_Ramekin_White_Porcelain
+  gso_red_mug <- ACE_Coffee_Mug_Kristen_16_oz_cup
+  gso_rhino_figure <- Schleich_African_Black_Rhino
+  gso_ring_stacker <- STACKING_RING
+  gso_rubber_toy <- Kong_Puppy_Teething_Rubber_Small_Pink
+  gso_scissors <- Diamond_Visions_Scissors_Red
+  gso_screwdriver <- Craftsman_Grip_Screwdriver_Phillips_Cushion
+  gso_shark_figure <- Weisshai_Great_White_Shark
+  gso_small_plate <- Kotobuki_Saucer_Dragon_Fly
+  gso_snack_box <- Nestle_Skinny_Cow_Dreamy_Clusters_Candy_Dark_Chocolate_6_pack_1_oz_pouches
+  gso_soda_bottle_a <- Weston_No_22_Cajun_Jerky_Tonic_12_fl_oz_nLj64ZnGwDh
+  gso_soda_bottle_b <- Weston_No_33_Signature_Sausage_Tonic_12_fl_oz
+  gso_spatula <- OXO_Cookie_Spatula
+  gso_speaker <- Logitech_Ultimate_Ears_Boom_Wireless_Speaker_Night_Black
+  gso_sponge <- Big_O_Sponges_Assorted_Cellulose_12_pack
+  gso_spoon_rest <- Threshold_Porcelain_Spoon_Rest_White
+  gso_squirrel_plush <- Squirrel
+  gso_stacking_cups <- Baby_Elements_Stacking_Cups
+  gso_supplement_bottle <- CoQ10
+  gso_supplement_jar <- Mastic_Gum
+  gso_teal_cup <- Cole_Hardware_Mug_Classic_Blue
+  gso_toy_train <- Thomas_Friends_Woodan_Railway_Henry
+  gso_triceratops <- Great_Dinos_Triceratops_Toy
+  gso_usb_stick <- Kingston_DT4000MR_G2_Management_Ready_USB_64GB
+  gso_vitamin_box <- YumYum_D3_Liquid
+  gso_washcloth <- Home_Fashions_Washcloth_Olive_Green
+  gso_white_bowl <- Threshold_Bead_Cereal_Bowl_White
+  gso_white_mouse <- Razer_Taipan_White_Ambidextrous_Gaming_Mouse
+  gso_windup_dog <- Toysmith_Windem_Up_Flippin_Animals_Dog
+  gso_yellow_bowl <- Cole_Hardware_Bowl_Scirocco_YellowBlue
+  gso_yellow_mug <- Room_Essentials_Mug_White_Yellow
+  gso_yoshi_figure <- Nintendo_Yoshi_Action_Figure

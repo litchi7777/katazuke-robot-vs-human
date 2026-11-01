@@ -1,0 +1,44 @@
+{
+ "name_ja": "缶切り",
+ "name_en": "can opener",
+ "gso_name": "OXO_Soft_Works_Can_Opener_SnapLock",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.23,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.1744,
+  0.0704,
+  0.0563
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  53,
+  49,
+  47
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1086,
+ "collision_mass_split": [
+  0.0249,
+  0.0451,
+  0.1345,
+  0.0559,
+  0.0489,
+  0.0177,
+  0.0509,
+  0.0339,
+  0.0182,
+  0.0296,
+  0.0037,
+  0.0056,
+  0.002,
+  0.0164,
+  0.0868,
+  0.4259
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "name_ja": "段ボールの空き箱",
+ "name_en": "empty cardboard package",
+ "gso_name": "Google_Cardboard_Original_package",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "trash",
+ "mass_kg": 0.05,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.2141,
+  0.1752,
+  0.0228
+ ],
+ "graspable_guess": false,
+ "split": "battle",
+ "mean_bgr": [
+  91,
+  132,
+  157
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 482,
+ "collision_mass_split": [
+  0.0135,
+  0.0233,
+  0.0074,
+  0.0104,
+  0.0279,
+  0.0035,
+  0.0804,
+  0.0563,
+  0.0552,
+  0.0079,
+  0.1981,
+  0.042,
+  0.3126,
+  0.0872,
+  0.05,
+  0.0244
+ ]
+}

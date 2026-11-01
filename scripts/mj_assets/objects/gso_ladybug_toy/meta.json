@@ -1,0 +1,44 @@
+{
+ "name_ja": "てんとう虫の木のおもちゃ",
+ "name_en": "wooden ladybug toy",
+ "gso_name": "LADYBUG_BEAD",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.05,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.0843,
+  0.057,
+  0.0302
+ ],
+ "graspable_guess": true,
+ "split": "test",
+ "mean_bgr": [
+  86,
+  108,
+  158
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1550,
+ "collision_mass_split": [
+  0.0122,
+  0.0115,
+  0.0369,
+  0.0214,
+  0.0021,
+  0.0485,
+  0.1056,
+  0.1539,
+  0.0882,
+  0.0673,
+  0.0176,
+  0.0851,
+  0.0735,
+  0.0484,
+  0.1501,
+  0.0778
+ ]
+}

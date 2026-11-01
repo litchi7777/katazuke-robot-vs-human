@@ -1,0 +1,44 @@
+{
+ "name_ja": "ローションのボトル",
+ "name_en": "lotion bottle",
+ "gso_name": "Marc_Anthony_True_Professional_Strictly_Curls_Curl_Defining_Lotion",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.2,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.0625,
+  0.0498,
+  0.1952
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  153,
+  218,
+  206
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 3 deg)",
+ "visual_faces": 2066,
+ "collision_parts": 16,
+ "collision_faces": 914,
+ "collision_mass_split": [
+  0.0907,
+  0.0244,
+  0.0509,
+  0.0045,
+  0.0326,
+  0.0381,
+  0.0415,
+  0.2299,
+  0.0768,
+  0.0562,
+  0.0661,
+  0.0378,
+  0.0092,
+  0.133,
+  0.0611,
+  0.0474
+ ]
+}

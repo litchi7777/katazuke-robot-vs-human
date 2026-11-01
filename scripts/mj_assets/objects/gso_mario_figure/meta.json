@@ -1,0 +1,44 @@
+{
+ "name_ja": "マリオのフィギュア",
+ "name_en": "Mario figure",
+ "gso_name": "Nintendo_Mario_Action_Figure",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.08,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.062,
+  0.0546,
+  0.1023
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  125,
+  112,
+  153
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1480,
+ "collision_mass_split": [
+  0.0849,
+  0.0454,
+  0.0279,
+  0.0844,
+  0.0824,
+  0.0128,
+  0.0325,
+  0.0045,
+  0.0178,
+  0.0086,
+  0.0713,
+  0.0567,
+  0.0262,
+  0.1705,
+  0.0339,
+  0.2401
+ ]
+}

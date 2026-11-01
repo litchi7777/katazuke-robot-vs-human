@@ -1,0 +1,44 @@
+{
+ "name_ja": "赤いふきん",
+ "name_en": "red dish towel",
+ "gso_name": "Cole_Hardware_Dishtowel_Red",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.05,
+ "friction": 0.9,
+ "soft": true,
+ "size_m": [
+  0.2366,
+  0.1708,
+  0.0265
+ ],
+ "graspable_guess": false,
+ "split": "battle",
+ "mean_bgr": [
+  81,
+  63,
+  184
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 654,
+ "collision_mass_split": [
+  0.0564,
+  0.0748,
+  0.0427,
+  0.0487,
+  0.0491,
+  0.0404,
+  0.0207,
+  0.027,
+  0.0012,
+  0.0557,
+  0.0822,
+  0.125,
+  0.0863,
+  0.0578,
+  0.114,
+  0.1182
+ ]
+}

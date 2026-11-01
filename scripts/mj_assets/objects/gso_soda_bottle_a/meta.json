@@ -1,0 +1,44 @@
+{
+ "name_ja": "ジュースの空き瓶",
+ "name_en": "empty soda bottle",
+ "gso_name": "Weston_No_22_Cajun_Jerky_Tonic_12_fl_oz_nLj64ZnGwDh",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "trash",
+ "mass_kg": 0.2,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.0637,
+  0.0626,
+  0.1992
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  85,
+  126,
+  135
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 2 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1010,
+ "collision_mass_split": [
+  0.0322,
+  0.0464,
+  0.0183,
+  0.0401,
+  0.0047,
+  0.015,
+  0.0342,
+  0.0359,
+  0.0243,
+  0.1093,
+  0.0992,
+  0.0954,
+  0.1401,
+  0.0688,
+  0.0437,
+  0.1925
+ ]
+}

@@ -1,0 +1,1460 @@
+diff --git a/src/rebotarm_bringup/config/rebotarm_hardware.yaml b/src/rebotarm_bringup/config/rebotarm_hardware.yaml
+index b34d599..a12bade 100644
+--- a/src/rebotarm_bringup/config/rebotarm_hardware.yaml
++++ b/src/rebotarm_bringup/config/rebotarm_hardware.yaml
+@@ -4,7 +4,7 @@
+ # selected model's overrides are deep-merged on top. Launch parameter channel
+ # has highest priority.
+ 
+-default_model: dm
++default_model: rs
+ 
+ models:
+   dm:
+@@ -39,7 +39,7 @@ models:
+       urdf_path: package://rebotarm_bringup/description/RS/urdf/ReBot_Arm_RS.urdf
+       end_effector_frame: gripper_end
+       channel: can0
+-      rate: 500
++      rate: 100
+       groups:
+         arm:
+           joints: [joint1, joint2, joint3, joint4, joint5, joint6]
+@@ -47,7 +47,7 @@ models:
+           joints: [gripper]
+       gripper:
+         position_limits:
+-          open: 5.0
++          open: 2.7  # official 5.0; LeRobot teleop data max ~2.75 rad (157deg)
+           close: 0.0
+       control:
+         arm_control_mode: mit
+diff --git a/src/rebotarm_moveit_demos/config/pick_place_rs.yaml b/src/rebotarm_moveit_demos/config/pick_place_rs.yaml
+index ed0a8fe..b12eadc 100644
+--- a/src/rebotarm_moveit_demos/config/pick_place_rs.yaml
++++ b/src/rebotarm_moveit_demos/config/pick_place_rs.yaml
+@@ -17,8 +17,8 @@ pick_place:
+     pipeline_id: ompl
+     result_timeout: 30.0
+     joint_tolerance: 0.01
+-    velocity_scaling: 1.0
+-    acceleration_scaling: 1.0
++    velocity_scaling: 0.2
++    acceleration_scaling: 0.2
+ 
+     use_gripper: true
+     gripper_action_name: /gripper_controller/follow_joint_trajectory
+@@ -30,7 +30,7 @@ pick_place:
+     open_gripper_position: 0.045
+     grasp_gripper_position: 0.017
+     closed_gripper_position: 0.0
+-    hardware_open_gripper_position: 5.0
++    hardware_open_gripper_position: 2.7
+     hardware_closed_gripper_position: 0.0
+     gripper_motion_duration: 1.0
+     gripper_max_effort: 10.0
+diff --git a/src/rebotarmcontroller/rebotarmcontroller/hardware_config.py b/src/rebotarmcontroller/rebotarmcontroller/hardware_config.py
+index 627a306..54f74e0 100644
+--- a/src/rebotarmcontroller/rebotarmcontroller/hardware_config.py
++++ b/src/rebotarmcontroller/rebotarmcontroller/hardware_config.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+ 
+ import copy
++import math
+ import sys
+ import tempfile
+ from pathlib import Path
+@@ -12,6 +13,10 @@ from ament_index_python.packages import (
+     get_package_share_directory,
+ )
+ 
++# Largest gripper open target (rad) the arm hold trial accepts. 2.0 until 2026-10-28; the user
++# saw the fingers open well past 1.9 rad, and the trial gripper runs at kp 8 (soft at the end stop).
++GRIPPER_OPEN_MAX = 4.5  # rad; 2026-11-01 a 5.8 rad open with a -0.45 rad zero drift drove the fingers past their stop
++
+ 
+ def resolve_hardware_config(
+     hardware_config: str | None,
+@@ -120,6 +125,8 @@ def _load_ros_hardware_config(
+         merged = yaml.safe_load(f) or {}
+ 
+     merged = _deep_merge(merged, model_config.get("overrides", {}) or {})
++    _restrict_joint1_trial(merged, model_name)
++    _restrict_arm_hold_trial(merged, model_name)
+     if channel:
+         merged["channel"] = channel
+     _resolve_package_urdf(merged)
+@@ -128,6 +135,93 @@ def _load_ros_hardware_config(
+     return model_name, merged
+ 
+ 
++def _restrict_joint1_trial(data: dict[str, Any], model: str) -> None:
++    trial = data.get("joint1_only_trial", False)
++    if not isinstance(trial, bool):
++        raise ValueError("joint1_only_trial must be a boolean")
++    if not trial:
++        return
++    bounds = data.get("joint1_trial_position_limits")
++    if bounds is not None and (
++        not isinstance(bounds, list) or len(bounds) != 2
++        or not all(isinstance(v, (int, float)) and math.isfinite(v) for v in bounds)
++        or not -2.8 <= bounds[0] < 0 < bounds[1] <= 2.8
++    ):
++        raise ValueError("joint1 trial position limits must straddle zero inside [-2.8, 2.8]")
++    if (model != "rs" or _arm_joint_names(data) != ["joint1"] or data.get("rate") != 100
++            or _arm_control_mode(data) != "mit"):
++        raise ValueError("joint1 trial requires RS, arm=[joint1], rate=100, MIT")
++    joint = [j for j in data.get("joints", []) if j.get("name") == "joint1"]
++    if (len(joint) != 1 or joint[0].get("motor_id") != 1
++            or joint[0].get("vendor") != "robstride" or joint[0].get("model") != "rs-06"):
++        raise ValueError("joint1 trial requires exactly the RS-06 motor with ID 1")
++    # Deep merge leaves the SDK's gripper group behind. Remove it and the other
++    # motors before constructing any SDK object or opening a CAN connection.
++    data["joints"] = joint
++    data["groups"] = {"arm": {"joints": ["joint1"]}}
++
++
++ARM_JOINTS = [f"joint{i}" for i in range(1, 7)]
++ARM_MOTOR_MODELS = ["rs-06", "rs-06", "rs-06", "rs-00", "rs-00", "rs-00"]
++
++
++def _restrict_arm_hold_trial(data: dict[str, Any], model: str) -> None:
++    """All six arm motors hold, one moves; the gripper is never registered."""
++    trial = data.get("arm_hold_trial", False)
++    if not isinstance(trial, bool):
++        raise ValueError("arm_hold_trial must be a boolean")
++    if not trial:
++        return
++    if data.get("joint1_only_trial", False):
++        raise ValueError("arm_hold_trial and joint1_only_trial are mutually exclusive")
++    if (model != "rs" or _arm_joint_names(data) != ARM_JOINTS or data.get("rate") != 100
++            or _arm_control_mode(data) != "mit"):
++        raise ValueError("arm hold trial requires RS, arm=joint1..joint6, rate=100, MIT")
++    joints = {j.get("name"): j for j in data.get("joints", [])}
++    for motor_id, (name, motor_model) in enumerate(zip(ARM_JOINTS, ARM_MOTOR_MODELS), start=1):
++        joint = joints.get(name, {})
++        if (joint.get("motor_id") != motor_id or joint.get("vendor") != "robstride"
++                or joint.get("model") != motor_model):
++            raise ValueError(f"arm hold trial requires {name} as RobStride {motor_model} ID {motor_id}")
++    limits = data.get("arm_hold_trial_position_limits")
++    if not isinstance(limits, dict) or sorted(limits) != ARM_JOINTS:
++        raise ValueError("arm hold trial needs position limits for exactly joint1..joint6")
++    for name, bounds in limits.items():
++        if (not isinstance(bounds, list) or len(bounds) != 2
++                or not all(isinstance(v, (int, float)) and math.isfinite(v) for v in bounds)
++                or not -2.8 <= bounds[0] < 0 < bounds[1] <= 2.8):
++            raise ValueError(f"{name} trial limits must straddle zero inside [-2.8, 2.8]")
++    scale = data.get("gravity_ff_scale")
++    if (not isinstance(scale, list) or len(scale) != 6
++            or not all(isinstance(v, (int, float)) and math.isfinite(v) and 0 <= v <= 1.55
++                       for v in scale)):
++        raise ValueError("arm hold trial needs gravity_ff_scale: six values in [0, 1.55]")
++    settle = data.get("safe_home_settle_rad", 0.01)
++    if not isinstance(settle, (int, float)) or not 0 < settle <= 0.03:
++        raise ValueError("safe_home_settle_rad must be in (0, 0.03]")
++    data["joints"] = [joints[name] for name in ARM_JOINTS]
++    data["groups"] = {"arm": {"joints": list(ARM_JOINTS)}}
++    gripper = data.get("arm_hold_trial_gripper")
++    if gripper is None:
++        return
++    # Optional soft gripper: squeeze torque is kp * (commanded closing beyond contact).
++    if not isinstance(gripper, dict):
++        raise ValueError("arm_hold_trial_gripper must be a mapping")
++    kp, kd = gripper.get("mit_kp"), gripper.get("mit_kd")
++    if not (isinstance(kp, (int, float)) and 0 < kp <= 20 and isinstance(kd, (int, float)) and 0 <= kd <= 2):
++        raise ValueError("arm_hold_trial_gripper needs mit_kp in (0, 20] and mit_kd in [0, 2]")
++    joint = joints.get("gripper", {})
++    if joint.get("motor_id") != 7 or joint.get("vendor") != "robstride" or joint.get("model") != "rs-00":
++        raise ValueError("arm hold trial gripper must be RobStride rs-00 ID 7")
++    limits = data.get("gripper", {}).get("position_limits", {})
++    if not (limits.get("close") == 0.0 and 0 < limits.get("open", 0) <= GRIPPER_OPEN_MAX):
++        raise ValueError(f"arm hold trial gripper needs position_limits close 0.0 and open in (0, {GRIPPER_OPEN_MAX}]")
++    joint = copy.deepcopy(joint)
++    joint["MIT"] = {"kp": float(kp), "kd": float(kd)}
++    data["joints"].append(joint)
++    data["groups"]["gripper"] = {"joints": ["gripper"]}
++
++
+ def _resolve_package_urdf(data: dict[str, Any]) -> None:
+     """Resolve a package:// URDF URI before passing config to the SDK."""
+     value = str(data.get("urdf_path", ""))
+diff --git a/src/rebotarmcontroller/rebotarmcontroller/hardware_manager.py b/src/rebotarmcontroller/rebotarmcontroller/hardware_manager.py
+index c613496..e7d7e19 100644
+--- a/src/rebotarmcontroller/rebotarmcontroller/hardware_manager.py
++++ b/src/rebotarmcontroller/rebotarmcontroller/hardware_manager.py
+@@ -54,6 +54,16 @@ class HardwareManager:
+         self.model_name = str(runtime_config.get("model", "dm")).lower()
+         control_runtime = runtime_config["control"]
+         self._arm_control_mode = control_runtime["arm_control_mode"]
++        self._joint1_only_trial = hardware_data.get("joint1_only_trial", False)
++        self._trial_joint1_limits = hardware_data.get("joint1_trial_position_limits")
++        self._arm_hold_trial = hardware_data.get("arm_hold_trial", False)
++        self._trial_position_limits = None
++        if self._arm_hold_trial:
++            limits = hardware_data["arm_hold_trial_position_limits"]
++            self._trial_position_limits = np.array(
++                [limits[f"joint{i}"] for i in range(1, 7)], dtype=np.float64
++            )
++        self._safe_home_settle = float(hardware_data.get("safe_home_settle_rad", 0.01))
+ 
+         self._robot = RebotArm(hw_yaml=str(hardware_config_path))
+         self._arm_group = self._robot.groups.get("arm")
+@@ -67,6 +77,8 @@ class HardwareManager:
+         self._endpos_ctrl = RebotArmEndPose(
+             self._robot,
+             arm_control_mode=self._arm_control_mode,
++            use_gravity_ff=not self._joint1_only_trial,
++            gravity_ff_scale=hardware_data.get("gravity_ff_scale"),
+         )
+ 
+         self._gripper_name = (
+@@ -103,6 +115,8 @@ class HardwareManager:
+         self._gravity_comp_active = False
+         self._gravity_comp_q_last: np.ndarray | None = None
+         self._homing_thread: int | None = None
++        self._shutdown_requested = False
++        self._shutdown_thread: int | None = None
+ 
+     # ------------------------------------------------------------------
+     # state
+@@ -158,6 +172,13 @@ class HardwareManager:
+     def has_gripper(self) -> bool:
+         return bool(self._robot.has_gripper)
+ 
++    @property
++    def trial_mode(self) -> bool:
++        return bool(getattr(self, "_joint1_only_trial", False) or getattr(self, "_arm_hold_trial", False))
++
++    def control_loop_stats(self, reset: bool = False) -> dict:
++        return self._robot.control_loop_stats(reset=reset)
++
+     @property
+     def state_machine(self) -> str:
+         return self._state_machine
+@@ -174,6 +195,7 @@ class HardwareManager:
+             "LOWLEVEL_STREAMING",
+             "GRAVITY_COMP",
+             "SAFE_HOMING",
++            "ERROR",
+         ):
+             raise ValueError(f"unsupported state machine value: {state}")
+         self._state_machine = state
+@@ -184,44 +206,76 @@ class HardwareManager:
+ 
+     @_locked
+     def connect(self) -> None:
++        self._check_shutdown()
+         if self._connected:
+             return
+         try:
+             self._robot.connect()
+-            if self.has_gripper:
+-                self._gripper_target_position = self.get_gripper_state()[0]
+             self._start_endpos_loop()
+             self._connected = True
+             self._enabled = True
+-        except Exception:
++        except Exception as exc:
+             self._control_output_enabled = False
+             self._endpos_ctrl._running = False
+             try:
+-                self._robot.stop_control_loop()
+                 self._robot.disconnect()
+-            finally:
+-                self._connected = False
+-                self._enabled = False
++            except Exception as cleanup_exc:
++                self._connected = self._robot._connected
++                # Enabling may have partially succeeded; never claim torque-off
++                # when startup cleanup could not confirm it.
++                self._enabled = True
++                self._error_codes.append("CONNECT_CLEANUP_FAILED")
++                self.set_state_machine("ERROR")
++                raise RuntimeError(f"connect failed: {exc}; cleanup failed: {cleanup_exc}") from exc
++            self._connected = False
++            self._enabled = False
+             raise
+ 
+     def shutdown(self, disable_after_safe_home: bool = True) -> None:
+         if not self._connected:
+             return
+-        try:
+-            self.safe_home()
+-            with self._cmd_lock:
+-                self._robot.stop_control_loop()
++        self._shutdown_requested = True
++        self._shutdown_thread = threading.get_ident()
++        errors = []
+ 
+-            if disable_after_safe_home:
+-                self.disable()
++        def attempt(label, operation):
++            try:
++                operation()
++            except Exception as exc:
++                errors.append(f"{label}: {exc}")
+ 
+-            with self._cmd_lock:
+-                self._robot.disconnect()
++        try:
++            # Explicit safe_home -> disable -> shutdown must never re-enable.
++            if self._enabled:
++                attempt("safe_home", self.safe_home)
++            self._control_output_enabled = False
++            self._endpos_ctrl._running = False
++            if disable_after_safe_home:
++                attempt("disable", self.disable)
++            else:
++                attempt("stop_motion", self.stop_motion)
++                attempt("stop_control_loop", self._robot.stop_control_loop)
++            # SDK disconnect also attempts disable, then closes every bus even
++            # if one motor fails. Preserve all failures instead of skipping it.
++            attempt("disconnect", self._robot.disconnect)
+         finally:
+-            self._connected = False
+-            self._enabled = False
++            self._connected = self._robot._connected
+             self._control_output_enabled = False
+-            self.set_state_machine("IDLE")
++            self._shutdown_thread = None
++            if errors:
++                self._error_codes.append("SHUTDOWN_FAILED")
++                self.set_state_machine("ERROR")
++            else:
++                self._enabled = False
++                self.set_state_machine("IDLE")
++        if errors:
++            raise RuntimeError("shutdown failed: " + "; ".join(errors))
++
++    def _check_shutdown(self) -> None:
++        if self._shutdown_requested and threading.get_ident() != self._shutdown_thread:
++            raise RuntimeError("rejecting command during shutdown")
++        if self._state_machine == "ERROR":
++            raise RuntimeError("rejecting command after hardware error; disable or restart first")
+ 
+     def get_joint_state(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+         return self._get_arm_state()
+@@ -232,6 +286,10 @@ class HardwareManager:
+     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+         pos, vel, torq = self._robot_get_state(request_feedback=request_feedback)
+         n = len(self.joint_names)
++        if getattr(self, "_joint1_only_trial", False) or getattr(self, "_arm_hold_trial", False):
++            # A fresh parameter read avoids relying on unverified MIT cache
++            # updates during the first powered trials.
++            pos = self.get_joint_positions(request=False)
+         return pos[:n], vel[:n], torq[:n]
+ 
+     def get_joint_positions(self, request: bool = False) -> np.ndarray:
+@@ -242,27 +300,55 @@ class HardwareManager:
+ 
+     @_locked
+     def hold_current_position(self) -> np.ndarray:
++        if not self._enabled or self._shutdown_requested:
++            return self._endpos_ctrl._q_target.copy()
+         current = self.get_joint_positions(request=True).copy()
++        if not np.all(np.isfinite(current)):
++            raise ValueError("non-finite hold position")
+         if self._state_machine != "SAFE_HOMING":
+             self._endpos_ctrl._q_target[:] = current
+             self._endpos_ctrl._qd_target[:] = 0.0
+         return current
+ 
++    @_locked
++    def request_position_hold(self) -> None:
++        self._check_shutdown()
++        if not self._enabled or self._state_machine != "IDLE":
++            raise RuntimeError("hold requires an enabled, idle arm; cancel active goals first")
++        self.stop_motion()
++        self.hold_current_position()
++
+     @_locked
+     def set_joint_position_target(self, positions) -> None:
++        self._check_shutdown()
++        if not self._enabled:
++            raise RuntimeError("rejecting joint target while arm is disabled")
+         if self._state_machine == "SAFE_HOMING":
+             raise RuntimeError("rejecting joint target during safe home")
++        target = self.validate_joint_targets(positions)
++        self.stop_motion()
++        self._endpos_ctrl._q_target[:] = target
++        self._endpos_ctrl._qd_target[:] = 0.0
++
++    def validate_joint_targets(self, positions) -> np.ndarray:
+         target = np.asarray(positions, dtype=np.float64).reshape(-1)
+         if len(target) != len(self.joint_names):
+             raise ValueError(
+                 f"expected {len(self.joint_names)} joint targets, got {len(target)}"
+             )
+-        self.stop_motion()
+-        self._endpos_ctrl._q_target[:] = target
+-        self._endpos_ctrl._qd_target[:] = 0.0
++        if not np.all(np.isfinite(target)):
++            raise ValueError("non-finite joint target")
++        bounds = getattr(self, "_trial_joint1_limits", None)
++        if bounds is not None and not bounds[0] <= target[0] <= bounds[1]:
++            raise ValueError("joint1 target outside the measured trial interval")
++        limits = getattr(self, "_trial_position_limits", None)
++        if limits is not None and not np.all((limits[:, 0] <= target) & (target <= limits[:, 1])):
++            raise ValueError("joint target outside the arm hold trial limits")
++        return target
+ 
+     @_locked
+     def start_endpos_control(self) -> None:
++        self._check_shutdown()
+         if self._gravity_comp_active:
+             raise RuntimeError("stop gravity compensation before starting endpos control")
+         if self._state_machine in ("SAFE_HOMING", "TRAJ_RUNNING"):
+@@ -282,18 +368,33 @@ class HardwareManager:
+ 
+     @_locked
+     def disable(self) -> None:
+-        if self._gravity_comp_active:
+-            raise RuntimeError("stop gravity compensation before disable")
+         self._control_output_enabled = False
+-        self.stop_motion()
+         self._endpos_ctrl._running = False
+-        self._robot.stop_control_loop()
+-        self._robot.disable_all()
+-        self._enabled = False
++        errors = []
++        for label, operation in (
++            ("stop_motion", self.stop_motion),
++            ("stop_control_loop", self._robot.stop_control_loop),
++            ("disable_all", self._robot.disable_all),
++        ):
++            try:
++                operation()
++                if label == "disable_all":
++                    self._enabled = False
++            except Exception as exc:
++                errors.append(f"{label}: {exc}")
++        self._gravity_comp_active = False
++        self._gravity_comp_q_last = None
++        if errors:
++            self._error_codes.append("DISABLE_FAILED")
++            self.set_state_machine("ERROR")
++            raise RuntimeError("disable failed: " + "; ".join(errors))
+         self.set_state_machine("IDLE")
+ 
+     def safe_home(self) -> None:
+         with self._cmd_lock:
++            self._check_shutdown()
++            if not self._enabled:
++                raise RuntimeError("safe_home requires an enabled arm; enable explicitly first")
+             self.stop_motion()
+             self.set_state_machine("IDLE")
+             if self._gravity_comp_active:
+@@ -320,12 +421,24 @@ class HardwareManager:
+             self.set_state_machine("SAFE_HOMING")
+             self._homing_thread = threading.get_ident()
+         try:
+-            if self.has_gripper:
+-                self.set_gripper_position(self.gripper_close_position)
+-            self._endpos_ctrl.safe_home()
++            # Arm homing preserves the existing gripper target; never close it
++            # as a side effect of returning the arm.
++            if getattr(self, "_joint1_only_trial", False):
++                self._endpos_ctrl.safe_home(max_vel=0.02)
++            elif getattr(self, "_arm_hold_trial", False):
++                # The client only finishes within 0.04 rad of home, so this
++                # stays a short, slow return under gravity feed-forward.
++                self._endpos_ctrl.safe_home(max_vel=0.02, settle_thresh=self._safe_home_settle)
++            else:
++                self._endpos_ctrl.safe_home()
++        except Exception:
++            self._error_codes.append("SAFE_HOME_FAILED")
++            self.set_state_machine("ERROR")
++            raise
+         finally:
+             self._homing_thread = None
+-            self.set_state_machine("IDLE")
++            if self._state_machine == "SAFE_HOMING":
++                self.set_state_machine("IDLE")
+ 
+     @_locked
+     def set_zero(self, joint_name: str = "") -> bool:
+@@ -405,6 +518,9 @@ class HardwareManager:
+         return fk_to_pose(position, rotation)
+ 
+     def _require_idle(self, what: str) -> None:
++        self._check_shutdown()
++        if not self._enabled:
++            raise RuntimeError(f"rejecting {what} while arm is disabled")
+         state = self._state_machine
+         if state in ("TRAJ_RUNNING", "GRAVITY_COMP", "SAFE_HOMING"):
+             raise RuntimeError(f"rejecting {what} in state {state}")
+@@ -452,6 +568,7 @@ class HardwareManager:
+ 
+     @_locked
+     def start_gravity_compensation(self) -> None:
++        self._check_shutdown()
+         if self._state_machine in ("TRAJ_RUNNING", "SAFE_HOMING"):
+             raise RuntimeError(
+                 f"rejecting gravity compensation in state {self._state_machine}"
+@@ -648,6 +765,7 @@ class HardwareManager:
+         self._gripper_target_position = None
+ 
+     def _begin_gripper_command(self, *, allow_endpos: bool = False) -> None:
++        self._check_shutdown()
+         if not self._enabled:
+             raise RuntimeError("rejecting gripper command while arm is disabled")
+         if self._gravity_comp_active or self.state_machine == "GRAVITY_COMP":
+@@ -671,6 +789,7 @@ class HardwareManager:
+     # ------------------------------------------------------------------
+ 
+     def _begin_lowlevel_streaming(self, required_mode: str) -> None:
++        self._check_shutdown()
+         if not self._enabled:
+             raise RuntimeError("rejecting low-level command while arm is disabled")
+         if self._gravity_comp_active or self.state_machine == "GRAVITY_COMP":
+@@ -713,35 +832,70 @@ class HardwareManager:
+         self._start_endpos_loop(target)
+ 
+     def _start_endpos_loop(self, target: np.ndarray | None = None) -> None:
+-        self._configure_groups_for_endpos()
+         if target is None:
+-            self.hold_current_position()
+-        else:
+-            self._endpos_ctrl._q_target[:] = np.asarray(target, dtype=np.float64)
+-            self._endpos_ctrl._qd_target[:] = 0.0
++            target = self.get_joint_positions(request=True).copy()
++        target = np.asarray(target, dtype=np.float64)
++        if not np.all(np.isfinite(target)):
++            raise ValueError("non-finite initial arm position")
++        bounds = getattr(self, "_trial_joint1_limits", None)
++        if bounds is not None and not bounds[0] - 0.002 <= target[0] <= bounds[1] + 0.002:
++            raise ValueError("initial joint1 outside measured trial interval; do not enable")
++        limits = getattr(self, "_trial_position_limits", None)
++        if limits is not None and not np.all(
++            (limits[:, 0] - 0.002 <= target) & (target <= limits[:, 1] + 0.002)
++        ):
++            raise ValueError("initial arm pose outside the arm hold trial limits; do not enable")
++        self._endpos_ctrl._q_target[:] = target
++        self._endpos_ctrl._qd_target[:] = 0.0
++        if self.has_gripper:
++            gripper_position = self.get_gripper_state()[0]
++            if not math.isfinite(gripper_position):
++                raise ValueError("non-finite initial gripper position")
++            self._endpos_ctrl.set_gripper_target(gripper_position)
++            self._gripper_target_position = gripper_position
++        # Capture both positions before enabling or starting any output.
++        self._configure_groups_for_endpos()
+         self._control_output_enabled = True
+         self._robot.start_control_loop(self._endpos_loop_cb)
+         self._endpos_ctrl._running = True
+ 
+     def _configure_groups_for_endpos(self) -> None:
+         if self._arm_control_mode == "mit":
+-            self._arm_group.mode_mit(
++            mode_ok = self._arm_group.mode_mit(
+                 kp=self._arm_mit_kp,
+                 kd=self._arm_mit_kd,
+             )
++            trial = getattr(self, "_joint1_only_trial", False) or getattr(self, "_arm_hold_trial", False)
++            if trial and not mode_ok:
++                raise RuntimeError("arm did not enter MIT mode; do not enable")
+         else:
+             self._arm_group.mode_pos_vel()
+-        self._arm_group.enable()
++        if getattr(self, "_joint1_only_trial", False):
++            # Group.enable swallows a CAN exception. A trial must propagate an
++            # individual motor enable failure, and never issue a bulk enable.
++            self._robot._motor_map["joint1"].enable()
++        elif getattr(self, "_arm_hold_trial", False):
++            # Same rule for all six: the first failure aborts connect(), whose
++            # cleanup disables every motor that was already enabled.
++            for name in self.joint_names:
++                self._robot._motor_map[name].enable()
++        else:
++            self._arm_group.enable()
+         if self.has_gripper:
+             if not self._gripper_group.mode_mit():
+                 raise RuntimeError("gripper did not enter mit mode")
+-            self._gripper_group.enable()
++            if getattr(self, "_arm_hold_trial", False):
++                self._robot._motor_map[self._gripper_name].enable()
++            else:
++                self._gripper_group.enable()
+ 
+     @_locked
+     def stop_motion(self) -> None:
+         self._endpos_ctrl._stop_send.set()
+         if self._endpos_ctrl._send_thread is not None:
+             self._endpos_ctrl._send_thread.join(timeout=5.0)
++            if self._endpos_ctrl._send_thread.is_alive():
++                raise RuntimeError("trajectory sender did not stop; stop flag remains set")
+         self._endpos_ctrl._moving = False
+         self._endpos_ctrl._stop_send.clear()
+ 
+diff --git a/src/rebotarmcontroller/rebotarmcontroller/rebotarm_controller.py b/src/rebotarmcontroller/rebotarmcontroller/rebotarm_controller.py
+index 3522885..6ef8fa2 100644
+--- a/src/rebotarmcontroller/rebotarmcontroller/rebotarm_controller.py
++++ b/src/rebotarmcontroller/rebotarmcontroller/rebotarm_controller.py
+@@ -3,6 +3,7 @@ from __future__ import annotations
+ import rclpy
+ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
+ from rclpy.executors import MultiThreadedExecutor
++from rclpy.executors import ExternalShutdownException
+ from rclpy.node import Node
+ from rclpy.qos import qos_profile_sensor_data
+ 
+@@ -72,6 +73,28 @@ class reBotArmController(Node):
+             f"reBotArmController started: namespace=/{self.arm_namespace}, "
+             f"joints={self.hardware.joint_names}"
+         )
++        if self.hardware.trial_mode:
++            # Trials record the measured control period; it was only a setting before.
++            self._loop_stats_timer = self.create_timer(
++                2.0, self.log_control_loop_stats, callback_group=self.slow_group
++            )
++
++    def log_control_loop_stats(self) -> None:
++        stats = self.hardware.control_loop_stats(reset=True)
++        if not stats or not stats.get("iterations"):
++            return
++
++        def ms(value):
++            return "n/a" if value is None else f"{value * 1000:.3f}"
++
++        self.get_logger().info(
++            "control_loop "
++            f"iterations={stats['iterations']} overruns={stats['overruns']} "
++            f"callback_mean_ms={ms(stats['callback_mean_s'])} "
++            f"callback_max_ms={ms(stats['callback_max_s'])} "
++            f"period_mean_ms={ms(stats['period_mean_s'])} "
++            f"period_max_ms={ms(stats['period_max_s'])}"
++        )
+ 
+     def publish_arm_status(self, *, read_hardware: bool = True) -> None:
+         self.joint_state_publisher.publish_status(read_hardware=read_hardware)
+@@ -89,11 +112,19 @@ def main(args=None) -> None:
+     executor.add_node(node)
+     try:
+         executor.spin()
++    except (KeyboardInterrupt, ExternalShutdownException):
++        pass
+     finally:
+-        node.shutdown()
+-        executor.shutdown()
+-        node.destroy_node()
+-        rclpy.shutdown()
++        try:
++            node.shutdown()
++        finally:
++            try:
++                executor.shutdown()
++            finally:
++                try:
++                    node.destroy_node()
++                finally:
++                    rclpy.try_shutdown()
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/src/rebotarmcontroller/rebotarmcontroller/ros_actions.py b/src/rebotarmcontroller/rebotarmcontroller/ros_actions.py
+index 47f92b2..9e7319d 100644
+--- a/src/rebotarmcontroller/rebotarmcontroller/ros_actions.py
++++ b/src/rebotarmcontroller/rebotarmcontroller/ros_actions.py
+@@ -53,7 +53,7 @@ class ArmActions:
+ 
+     def _gate_goal(self, blocked, label):
+         state = self._hardware.state_machine
+-        if state in blocked:
++        if not self._hardware.enabled or state in blocked:
+             self._node.get_logger().warn(f"rejecting {label} goal in state {state}")
+             return GoalResponse.REJECT
+         return GoalResponse.ACCEPT
+@@ -62,7 +62,7 @@ class ArmActions:
+         return CancelResponse.ACCEPT
+ 
+     def _fail_move_to_pose(self, goal_handle, result, message, *, canceled=False):
+-        if self._hardware.state_machine != "SAFE_HOMING":
++        if self._hardware.state_machine not in ("SAFE_HOMING", "ERROR"):
+             self._hardware.set_state_machine("IDLE")
+             self._node.publish_arm_status()
+         if canceled:
+@@ -158,6 +158,22 @@ class ArmActions:
+             result.error_string = "point positions length must match joint_names"
+             return result
+ 
++        try:
++            # Reject the entire trajectory before executing its first segment.
++            for target in targets:
++                self._hardware.validate_joint_targets(target)
++        except ValueError as exc:
++            goal_handle.abort()
++            result.error_code = FollowJointTrajectory.Result.INVALID_GOAL
++            result.error_string = str(exc)
++            return result
++
++        if goal_handle.is_cancel_requested:
++            goal_handle.canceled()
++            result.error_code = FollowJointTrajectory.Result.SUCCESSFUL
++            result.error_string = "follow_joint_trajectory canceled before execution"
++            return result
++
+         try:
+             self._hardware.begin_trajectory_stream()
+             self._node.publish_arm_status()
+@@ -179,6 +195,13 @@ class ArmActions:
+                 desired_velocities = np.zeros_like(q1)
+ 
+                 while True:
++                    # Honor cancellation before another target or feedback read.
++                    if goal_handle.is_cancel_requested:
++                        self._hardware.hold_current_position()
++                        goal_handle.canceled()
++                        result.error_code = FollowJointTrajectory.Result.SUCCESSFUL
++                        result.error_string = "follow_joint_trajectory canceled"
++                        return result
+                     if self._hardware.state_machine == "SAFE_HOMING":
+                         goal_handle.abort()
+                         result.error_code = (
+@@ -208,13 +231,6 @@ class ArmActions:
+                     ]
+                     goal_handle.publish_feedback(feedback)
+ 
+-                    if goal_handle.is_cancel_requested:
+-                        self._hardware.hold_current_position()
+-                        goal_handle.canceled()
+-                        result.error_code = FollowJointTrajectory.Result.SUCCESSFUL
+-                        result.error_string = "follow_joint_trajectory canceled"
+-                        return result
+-
+                     if now >= t1:
+                         break
+                     time.sleep(0.02)
+@@ -226,7 +242,7 @@ class ArmActions:
+             result.error_string = f"execution failed: {exc}"
+             return result
+         finally:
+-            if self._hardware.state_machine != "SAFE_HOMING":
++            if self._hardware.state_machine not in ("SAFE_HOMING", "ERROR"):
+                 self._hardware.set_state_machine("IDLE")
+                 self._node.publish_arm_status()
+ 
+diff --git a/src/rebotarmcontroller/rebotarmcontroller/ros_services.py b/src/rebotarmcontroller/rebotarmcontroller/ros_services.py
+index 85db557..d707172 100644
+--- a/src/rebotarmcontroller/rebotarmcontroller/ros_services.py
++++ b/src/rebotarmcontroller/rebotarmcontroller/ros_services.py
+@@ -19,6 +19,7 @@ class ArmServices:
+         services = (
+             (Trigger, "enable", self.enable, node.slow_group),
+             (Trigger, "disable", self.disable, node.slow_group),
++            (Trigger, "hold", self.hold, node.reentrant_group),
+             (Trigger, "safe_home", self.safe_home, node.slow_group),
+             (
+                 Trigger,
+@@ -61,15 +62,19 @@ class ArmServices:
+         return self._run(response, self._hardware.enable, "enabled")
+ 
+     def disable(self, _request, response):
+-        def action():
+-            self._hardware.stop_gravity_compensation()
+-            self._hardware.disable()
+-
+-        return self._run(response, action, "disabled", read_hardware=False)
++        # disable handles gravity compensation directly; restarting a hold
++        # controller before disabling would re-enable motors unnecessarily.
++        return self._run(response, self._hardware.disable, "disabled", read_hardware=False)
+ 
+     def safe_home(self, _request, response):
+         return self._run(response, self._hardware.safe_home, "safe_home complete")
+ 
++    def hold(self, _request, response):
++        # Active actions must first reach a terminal state. The hardware manager
++        # checks state and captures the hold under the same command lock.
++        return self._run(response, self._hardware.request_position_hold,
++                         "holding measured position", read_hardware=False)
++
+     def start_gravity_compensation(self, _request, response):
+         return self._run(
+             response,
+diff --git a/src/rebotarmcontroller/test/test_arm_hold_trial.py b/src/rebotarmcontroller/test/test_arm_hold_trial.py
+new file mode 100644
+index 0000000..cb7b0d1
+--- /dev/null
++++ b/src/rebotarmcontroller/test/test_arm_hold_trial.py
+@@ -0,0 +1,222 @@
++import copy
++import unittest
++from types import SimpleNamespace
++from unittest.mock import Mock, call, patch
++
++import numpy as np
++
++from rebotarmcontroller.hardware_config import (
++    ARM_JOINTS,
++    _restrict_arm_hold_trial,
++    _workspace_root,
++    resolve_hardware_config,
++)
++from rebotarmcontroller.hardware_manager import HardwareManager
++
++CONFIG = _workspace_root().parent / "scripts/config/arm_hold_trial.yaml"
++LIMITS = [[-0.10, 0.10], [-0.05, 0.10], [-0.05, 0.10], [-0.12, 0.12], [-0.12, 0.12], [-0.12, 0.12]]
++
++
++def trial_data():
++    models = ["rs-06"] * 3 + ["rs-00"] * 3
++    return dict(
++        arm_hold_trial=True, rate=100, control={"arm_control_mode": "mit"},
++        groups={"arm": {"joints": list(ARM_JOINTS)}, "gripper": {"joints": ["gripper"]}},
++        joints=[dict(name=n, motor_id=i + 1, vendor="robstride", model=m)
++                for i, (n, m) in enumerate(zip(ARM_JOINTS, models))]
++        + [dict(name="gripper", motor_id=7, vendor="robstride", model="rs-00")],
++        arm_hold_trial_position_limits={n: list(b) for n, b in zip(ARM_JOINTS, LIMITS)},
++        gravity_ff_scale=[1.0] * 6,
++    )
++
++
++class ArmHoldTrialConfigTests(unittest.TestCase):
++    def test_restriction_drops_gripper_and_keeps_six_arm_motors(self):
++        data = trial_data()
++        _restrict_arm_hold_trial(data, "rs")
++        self.assertEqual([j["motor_id"] for j in data["joints"]], [1, 2, 3, 4, 5, 6])
++        self.assertEqual(data["groups"], {"arm": {"joints": list(ARM_JOINTS)}})
++
++    def test_restriction_refuses_unsafe_or_inconsistent_configs(self):
++        changes = (
++            lambda d: d.update(rate=500),
++            lambda d: d.update(arm_hold_trial="true"),
++            lambda d: d.update(joint1_only_trial=True),
++            lambda d: d["groups"]["arm"].update(joints=ARM_JOINTS[:5]),
++            lambda d: d["joints"][2].update(motor_id=7),
++            lambda d: d["joints"][3].update(model="rs-06"),
++            lambda d: d["arm_hold_trial_position_limits"].pop("joint6"),
++            lambda d: d["arm_hold_trial_position_limits"].update(joint3=[0.01, 0.1]),
++            lambda d: d["arm_hold_trial_position_limits"].update(joint2=[-0.1, 3.0]),
++            lambda d: d.update(gravity_ff_scale=[1.0] * 5),
++            lambda d: d.update(gravity_ff_scale=[1.0, 2.0, 1.0, 1.0, 1.0, 1.0]),
++            lambda d: d.pop("gravity_ff_scale"),
++            lambda d: d.update(safe_home_settle_rad=0.05),
++        )
++        for change in changes:
++            data = trial_data()
++            change(data)
++            with self.assertRaises(ValueError):
++                _restrict_arm_hold_trial(data, "rs")
++        with self.assertRaises(ValueError):
++            _restrict_arm_hold_trial(trial_data(), "dm")
++
++    def test_optional_soft_gripper_is_kept_with_trial_gains(self):
++        data = trial_data()
++        data["arm_hold_trial_gripper"] = {"mit_kp": 8.0, "mit_kd": 0.3}
++        data["gripper"] = {"position_limits": {"open": 1.6, "close": 0.0}}
++        _restrict_arm_hold_trial(data, "rs")
++        self.assertEqual([j["motor_id"] for j in data["joints"]], [1, 2, 3, 4, 5, 6, 7])
++        self.assertEqual(data["joints"][-1]["MIT"], {"kp": 8.0, "kd": 0.3})
++        self.assertEqual(data["groups"]["gripper"], {"joints": ["gripper"]})
++
++    def test_soft_gripper_rejects_strong_gains_or_wide_opening(self):
++        for gripper, limits in (({"mit_kp": 50.0, "mit_kd": 0.3}, {"open": 1.6, "close": 0.0}),
++                                ({"mit_kp": 8.0}, {"open": 1.6, "close": 0.0}),
++                                ({"mit_kp": 8.0, "mit_kd": 0.3}, {"open": 5.0, "close": 0.0}),
++                                ("soft", {"open": 1.6, "close": 0.0})):
++            data = trial_data()
++            data["arm_hold_trial_gripper"] = gripper
++            data["gripper"] = {"position_limits": limits}
++            with self.assertRaises(ValueError):
++                _restrict_arm_hold_trial(data, "rs")
++
++    def test_default_configuration_is_not_pruned(self):
++        data = {"groups": {"arm": {"joints": ["joint1"]}}, "joints": [1]}
++        original = copy.deepcopy(data)
++        _restrict_arm_hold_trial(data, "rs")
++        self.assertEqual(data, original)
++
++
++class ArmHoldTrialManagerTests(unittest.TestCase):
++    def test_config_registers_six_motors_without_gripper_before_connect(self):
++        with patch("reBotArm_control_py.actuator.rebotarm.Controller") as controller:
++            try:
++                hardware = HardwareManager(hardware_config=str(CONFIG))
++                self.assertEqual(hardware.joint_names, list(ARM_JOINTS))
++                self.assertEqual([j.motor_id for j in hardware._robot._all_joints], [1, 2, 3, 4, 5, 6])
++                self.assertFalse(hardware.has_gripper)
++                self.assertTrue(hardware.trial_mode)
++                self.assertTrue(hardware._endpos_ctrl._use_gravity_ff)
++                self.assertEqual(hardware._endpos_ctrl._gravity_ff_scale.tolist(), [1.0] * 6)
++                self.assertEqual(hardware._arm_mit_kp.tolist(), [50, 150, 150, 50, 50, 50])
++                self.assertEqual(hardware._trial_position_limits.tolist(), LIMITS)
++                self.assertEqual(hardware._safe_home_settle, 0.02)
++                controller.assert_not_called()
++            finally:
++                resolve_hardware_config(None, "rs", "")
++
++    def test_startup_enables_each_arm_motor_individually_on_mock_bus(self):
++        motors = []
++
++        def add_motor(motor_id, feedback_id, model):
++            motor = Mock(name=f"motor{motor_id}")
++            motor.robstride_get_param_f32.return_value = 0.0
++            motor.get_state.return_value = None
++            motors.append(motor)
++            return motor
++
++        bus = Mock()
++        bus.add_robstride_motor.side_effect = add_motor
++        with patch("reBotArm_control_py.actuator.rebotarm.Controller", return_value=bus):
++            try:
++                hardware = HardwareManager(hardware_config=str(CONFIG))
++                hardware._robot.start_control_loop = Mock()
++                hardware.connect()
++                self.assertEqual(bus.add_robstride_motor.call_args_list,
++                                 [call(i, 0xFD, m) for i, m in
++                                  enumerate(["rs-06"] * 3 + ["rs-00"] * 3, start=1)])
++                for motor in motors:
++                    motor.enable.assert_called_once_with()
++                bus.enable_all.assert_not_called()
++                self.assertTrue(hardware.enabled)
++            finally:
++                resolve_hardware_config(None, "rs", "")
++
++    def test_pick_config_enables_gripper_individually_on_mock_bus(self):
++        motors = {}
++
++        def add_motor(motor_id, feedback_id, model):
++            motor = Mock(name=f"motor{motor_id}")
++            motor.robstride_get_param_f32.return_value = 0.0
++            motor.get_state.return_value = None
++            motors[motor_id] = motor
++            return motor
++
++        bus = Mock()
++        bus.add_robstride_motor.side_effect = add_motor
++        path = _workspace_root().parent / "scripts/config/arm_pick_trial.yaml"
++        with patch("reBotArm_control_py.actuator.rebotarm.Controller", return_value=bus):
++            try:
++                hardware = HardwareManager(hardware_config=str(path))
++                hardware._robot.start_control_loop = Mock()
++                hardware.connect()
++                self.assertTrue(hardware.has_gripper)
++                self.assertEqual(sorted(motors), [1, 2, 3, 4, 5, 6, 7])
++                for motor in motors.values():
++                    motor.enable.assert_called_once_with()
++                bus.enable_all.assert_not_called()
++                self.assertEqual(hardware._gripper_group._mit_kp.tolist(), [8.0])
++                self.assertEqual(hardware.gripper_open_position, 1.6)
++            finally:
++                resolve_hardware_config(None, "rs", "")
++
++    def manager(self):
++        h = object.__new__(HardwareManager)
++        h._arm_group = SimpleNamespace(joint_names=list(ARM_JOINTS))
++        h._trial_position_limits = np.array(LIMITS)
++        return h
++
++    def test_targets_outside_any_joint_limit_or_nan_are_rejected(self):
++        h = self.manager()
++        ok = [0.0, 0.04, 0.0, 0.0, -0.07, 0.05]
++        self.assertEqual(h.validate_joint_targets(ok).tolist(), ok)
++        for index, value in ((1, 0.11), (2, -0.06), (4, -0.13), (0, float("nan"))):
++            bad = list(ok)
++            bad[index] = value
++            with self.assertRaises(ValueError):
++                h.validate_joint_targets(bad)
++
++    def test_pose_outside_limits_refuses_enable(self):
++        h = self.manager()
++        h.get_joint_positions = Mock(return_value=np.array([0, 0, 0, 1.59, -2.02, 2.0]))
++        h._configure_groups_for_endpos = Mock()
++        with self.assertRaises(ValueError):
++            h._start_endpos_loop()
++        h._configure_groups_for_endpos.assert_not_called()
++
++    def test_enable_failure_propagates_instead_of_partial_success(self):
++        h = self.manager()
++        h._arm_control_mode = "mit"
++        h._arm_hold_trial = True
++        h._arm_mit_kp = h._arm_mit_kd = np.zeros(6)
++        h._arm_group = Mock(joint_names=list(ARM_JOINTS))
++        h._arm_group.mode_mit.return_value = True
++        h._robot = SimpleNamespace(_motor_map={n: Mock() for n in ARM_JOINTS}, has_gripper=False)
++        h._robot._motor_map["joint4"].enable.side_effect = RuntimeError("no ACK")
++        with self.assertRaisesRegex(RuntimeError, "no ACK"):
++            h._configure_groups_for_endpos()
++        h._robot._motor_map["joint5"].enable.assert_not_called()
++        h._arm_group.enable.assert_not_called()
++
++    def test_safe_home_is_slow_and_uses_configured_settle(self):
++        import threading
++        h = self.manager()
++        h._arm_hold_trial = True
++        h._joint1_only_trial = False
++        h._safe_home_settle = 0.02
++        h._cmd_lock = threading.RLock()
++        h._enabled = True
++        h._shutdown_requested = False
++        h._state_machine = "IDLE"
++        h._gravity_comp_active = False
++        h._error_codes = []
++        h.stop_motion = Mock()
++        h.start_endpos_control = Mock()
++        h._endpos_ctrl = Mock()
++        h.safe_home()
++        h._endpos_ctrl.safe_home.assert_called_once_with(max_vel=0.02, settle_thresh=0.02)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/src/rebotarmcontroller/test/test_joint1_isolation.py b/src/rebotarmcontroller/test/test_joint1_isolation.py
+new file mode 100644
+index 0000000..a4cbe08
+--- /dev/null
++++ b/src/rebotarmcontroller/test/test_joint1_isolation.py
+@@ -0,0 +1,110 @@
++import copy
++import unittest
++from types import SimpleNamespace
++from pathlib import Path
++from unittest.mock import Mock, patch
++
++import numpy as np
++
++from rebotarmcontroller.hardware_config import (
++    _restrict_joint1_trial,
++    _workspace_root,
++    resolve_hardware_config,
++)
++from rebotarmcontroller.hardware_manager import HardwareManager
++
++
++class Joint1IsolationTests(unittest.TestCase):
++    def test_measured_trial_limits_reject_targets_outside_range_and_nan(self):
++        h = object.__new__(HardwareManager)
++        h._arm_group = SimpleNamespace(joint_names=["joint1"])
++        h._trial_joint1_limits = [-0.98, 0.56]
++        self.assertEqual(h.validate_joint_targets([0.3]).tolist(), [0.3])
++        for q in (-0.99, 0.57, float("nan")):
++            with self.assertRaises(ValueError):
++                h.validate_joint_targets([q])
++
++    def test_outside_measured_range_refuses_enable(self):
++        h = object.__new__(HardwareManager)
++        h._trial_joint1_limits = [-0.98, 0.56]
++        h.get_joint_positions = Mock(return_value=np.array([0.6]))
++        h._configure_groups_for_endpos = Mock()
++        with self.assertRaises(ValueError):
++            h._start_endpos_loop()
++        h._configure_groups_for_endpos.assert_not_called()
++
++    def test_startup_registers_and_enables_only_motor1_on_mock_bus(self):
++        path = _workspace_root().parent / "scripts/config/joint1_range_trial.yaml"
++        motor = Mock()
++        motor.robstride_get_param_f32.return_value = 0.0
++        motor.get_state.return_value = None
++        bus = Mock()
++        bus.add_robstride_motor.return_value = motor
++        with patch("reBotArm_control_py.actuator.rebotarm.Controller", return_value=bus):
++            try:
++                hardware = HardwareManager(hardware_config=str(path))
++                hardware._robot.start_control_loop = Mock()
++                hardware.connect()
++                bus.add_robstride_motor.assert_called_once_with(1, 0xFD, "rs-06")
++                motor.enable.assert_called_once_with()
++                bus.enable_all.assert_not_called()
++                self.assertEqual(set(hardware._robot._motor_map), {"joint1"})
++                self.assertFalse(hardware.has_gripper)
++                self.assertTrue(hardware.enabled)
++                hardware._robot.start_control_loop.assert_called_once()
++                hardware._endpos_loop_cb(hardware._robot, 0.01)
++                motor.send_mit.assert_called_once()
++            finally:
++                resolve_hardware_config(None, "rs", "")
++
++    def test_config_prunes_all_other_motors_and_gripper_before_connect(self):
++        path = _workspace_root().parent / "scripts/config/joint1_range_trial.yaml"
++        # Construct the real adapter and SDK, with CAN controller creation banned.
++        # Constructors only load config/models; connect() must never be called.
++        with patch("reBotArm_control_py.actuator.rebotarm.Controller") as controller:
++            try:
++                hardware = HardwareManager(hardware_config=str(path))
++                self.assertEqual(hardware.joint_names, ["joint1"])
++                self.assertEqual([j.motor_id for j in hardware._robot._all_joints], [1])
++                self.assertEqual(hardware._robot._ctrl_map, {})
++                self.assertFalse(hardware.has_gripper)
++                self.assertEqual(hardware._robot.rate, 100)
++                self.assertFalse(hardware._endpos_ctrl._use_gravity_ff)
++                self.assertEqual(hardware._endpos_ctrl._n, 1)
++                self.assertEqual(hardware._arm_mit_kp.tolist(), [50])
++                self.assertEqual(hardware._arm_mit_kd.tolist(), [3])
++                controller.assert_not_called()
++            finally:
++                resolve_hardware_config(None, "rs", "")
++
++    def test_restriction_refuses_wrong_motor_model_arm_or_rate(self):
++        original = dict(joint1_only_trial=True, rate=100, control={"arm_control_mode": "mit"},
++                        groups={"arm": {"joints": ["joint1"]}},
++                        joints=[dict(name="joint1", motor_id=1, vendor="robstride", model="rs-06")])
++        for change in (lambda data: data.update(rate=500),
++                       lambda data: data["groups"]["arm"].update(joints=["joint1", "joint2"]),
++                       lambda data: data["joints"][0].update(motor_id=2),
++                       lambda data: data["joints"][0].update(model="rs-00"),
++                       lambda data: data.update(joint1_only_trial="true")):
++            data = copy.deepcopy(original)
++            change(data)
++            with self.assertRaises(ValueError):
++                _restrict_joint1_trial(data, "rs")
++        with self.assertRaises(ValueError):
++            _restrict_joint1_trial(copy.deepcopy(original), "dm")
++
++    def test_default_configuration_is_not_pruned(self):
++        data = {"groups": {"arm": {"joints": ["joint1", "joint2"]}}, "joints": [1, 2]}
++        original = copy.deepcopy(data)
++        _restrict_joint1_trial(data, "rs")
++        self.assertEqual(data, original)
++
++    def test_isolated_state_uses_fresh_position_parameter(self):
++        hardware = object.__new__(HardwareManager)
++        hardware._joint1_only_trial = True
++        hardware._arm_group = Mock(joint_names=["joint1"])
++        hardware._robot_get_state = Mock(return_value=(np.array([99]), np.array([0]), np.array([0])))
++        hardware.get_joint_positions = Mock(return_value=np.array([0.012]))
++        position, _, _ = hardware.get_joint_state()
++        self.assertEqual(position.tolist(), [0.012])
++        hardware.get_joint_positions.assert_called_once_with(request=False)
+diff --git a/src/rebotarmcontroller/test/test_lifecycle_safety.py b/src/rebotarmcontroller/test/test_lifecycle_safety.py
+new file mode 100644
+index 0000000..6e6a7d9
+--- /dev/null
++++ b/src/rebotarmcontroller/test/test_lifecycle_safety.py
+@@ -0,0 +1,337 @@
++import importlib
++import threading
++import unittest
++from types import SimpleNamespace
++from unittest.mock import Mock, PropertyMock, patch
++
++import numpy as np
++
++from rebotarmcontroller.hardware_manager import HardwareManager
++
++
++class LifecycleSafetyTest(unittest.TestCase):
++    def hardware(self):
++        h = object.__new__(HardwareManager)
++        h._cmd_lock = threading.RLock()
++        h._connected = h._enabled = h._control_output_enabled = True
++        h._shutdown_requested = False
++        h._shutdown_thread = h._homing_thread = None
++        h._gravity_comp_active = False
++        h._gravity_comp_q_last = None
++        h._state_machine = "IDLE"
++        h._error_codes = []
++        h._arm_control_mode = "mit"
++        h._arm_mit_kp = np.ones(6)
++        h._arm_mit_kd = np.ones(6)
++        h._arm_group = SimpleNamespace(mode_mit=Mock(), enable=Mock(),
++                                       joint_names=[f"joint{i}" for i in range(1, 7)])
++        h._gripper_group = SimpleNamespace(mode_mit=Mock(return_value=True), enable=Mock())
++        h._gripper_target_position = 1.3
++        h._endpos_ctrl = SimpleNamespace(
++            _running=True, _q_target=np.full(6, 0.2), _qd_target=np.zeros(6),
++            _gripper_target=1.3, _send_thread=None, _stop_send=threading.Event(),
++            _moving=False, safe_home=Mock())
++        h._endpos_ctrl.set_gripper_target = Mock(
++            side_effect=lambda q: setattr(h._endpos_ctrl, "_gripper_target", q))
++        h._robot = SimpleNamespace(_connected=True, has_gripper=True, control_loop_active=True,
++                                   disable_all=Mock(), start_control_loop=Mock())
++        h._robot.stop_control_loop = Mock(side_effect=lambda: setattr(h._robot, "control_loop_active", False))
++        h._robot.disconnect = Mock(side_effect=lambda: setattr(h._robot, "_connected", False))
++        h.get_joint_positions = Mock(return_value=np.full(6, 0.2))
++        h.get_gripper_state = Mock(return_value=(1.3, 0.0, 0.0, 0))
++        return h
++
++    def test_shutdown_after_disable_never_homes_or_enables(self):
++        h = self.hardware()
++        h._enabled = False
++        h.safe_home = Mock()
++        h.shutdown()
++        h.safe_home.assert_not_called()
++        h._arm_group.enable.assert_not_called()
++        h._gripper_group.enable.assert_not_called()
++        self.assertFalse(h._connected)
++
++    def test_home_exception_still_disables_and_disconnects(self):
++        h = self.hardware()
++        h.safe_home = Mock(side_effect=TimeoutError("home timed out"))
++        with self.assertRaisesRegex(RuntimeError, "home timed out"):
++            h.shutdown()
++        h._robot.disable_all.assert_called_once()
++        h._robot.disconnect.assert_called_once()
++        self.assertFalse(h.enabled)
++        self.assertFalse(h._connected)
++        self.assertEqual(h.state_machine, "ERROR")
++
++    def test_disable_failure_remains_reported_and_disconnect_is_attempted(self):
++        h = self.hardware()
++        h.safe_home = Mock()
++        h._robot.disable_all.side_effect = RuntimeError("no motor ACK")
++        h._robot.disconnect.side_effect = RuntimeError("bus close failed")
++        with self.assertRaisesRegex(RuntimeError, "no motor ACK.*bus close failed"):
++            h.shutdown()
++        h._robot.disconnect.assert_called_once()
++        self.assertTrue(h.enabled)
++        self.assertTrue(h._connected)
++        self.assertFalse(h._control_output_enabled)
++        self.assertIn("DISABLE_FAILED", h.error_codes)
++
++    def test_control_thread_failure_does_not_skip_torque_off_attempt(self):
++        h = self.hardware()
++        h._robot.stop_control_loop.side_effect = RuntimeError("thread stuck")
++        with self.assertRaisesRegex(RuntimeError, "thread stuck"):
++            h.disable()
++        h._robot.disable_all.assert_called_once()
++        self.assertFalse(h.enabled)
++
++    def test_disable_during_gravity_compensation_does_not_restart_hold(self):
++        h = self.hardware()
++        h._gravity_comp_active = True
++        h._start_endpos_hold = Mock()
++        h.disable()
++        h._start_endpos_hold.assert_not_called()
++        h._robot.disable_all.assert_called_once()
++        self.assertFalse(h._gravity_comp_active)
++
++    def test_safe_home_preserves_gripper_target(self):
++        h = self.hardware()
++        h.set_gripper_position = Mock()
++        h.safe_home()
++        h.set_gripper_position.assert_not_called()
++        h._endpos_ctrl.set_gripper_target.assert_not_called()
++        self.assertEqual(h._endpos_ctrl._gripper_target, 1.3)
++        h._endpos_ctrl.safe_home.assert_called_once()
++
++    def test_joint1_trial_safe_home_uses_low_speed(self):
++        h = self.hardware()
++        h._joint1_only_trial = True
++        h.safe_home()
++        h._endpos_ctrl.safe_home.assert_called_once_with(max_vel=0.02)
++
++    def test_hold_refuses_nonfinite_position_without_changing_target(self):
++        h = self.hardware()
++        previous = h._endpos_ctrl._q_target.copy()
++        h.get_joint_positions.return_value = np.full(6, np.nan)
++        with self.assertRaises(ValueError):
++            h.hold_current_position()
++        np.testing.assert_array_equal(h._endpos_ctrl._q_target, previous)
++
++    def test_explicit_hold_checks_idle_enabled_and_preserves_gripper_target(self):
++        for enabled, state in ((False, "IDLE"), (True, "TRAJ_RUNNING"), (True, "ERROR")):
++            h = self.hardware()
++            h._enabled, h._state_machine = enabled, state
++            with self.assertRaises(RuntimeError):
++                h.request_position_hold()
++            h.get_joint_positions.assert_not_called()
++        h = self.hardware()
++        h.request_position_hold()
++        self.assertEqual(h._endpos_ctrl._gripper_target, 1.3)
++        h._robot.start_control_loop.assert_not_called()
++        h._arm_group.enable.assert_not_called()
++
++    def test_safe_home_on_disabled_arm_rejects_without_enabling(self):
++        h = self.hardware()
++        h._enabled = False
++        with self.assertRaisesRegex(RuntimeError, "enabled arm"):
++            h.safe_home()
++        h._arm_group.enable.assert_not_called()
++        h._endpos_ctrl.safe_home.assert_not_called()
++
++    def test_home_failure_retains_fault_state_and_gripper_target(self):
++        h = self.hardware()
++        h._endpos_ctrl.safe_home.side_effect = TimeoutError("home timeout")
++        with self.assertRaises(TimeoutError):
++            h.safe_home()
++        self.assertEqual(h.state_machine, "ERROR")
++        self.assertIn("SAFE_HOME_FAILED", h.error_codes)
++        self.assertEqual(h._endpos_ctrl._gripper_target, 1.3)
++
++    def test_startup_captures_both_positions_before_enabling(self):
++        h = self.hardware()
++        h._endpos_ctrl._gripper_target = 0.0
++        h._endpos_ctrl._q_target[:] = 0.0
++        def check_targets():
++            self.assertEqual(h._endpos_ctrl._gripper_target, 1.3)
++            np.testing.assert_allclose(h._endpos_ctrl._q_target, 0.2)
++        h._arm_group.enable.side_effect = check_targets
++        h._start_endpos_loop()
++        h._robot.start_control_loop.assert_called_once()
++
++    def test_failed_position_read_prevents_enabling(self):
++        h = self.hardware()
++        h.get_gripper_state.side_effect = TimeoutError("gripper position missing")
++        with self.assertRaises(TimeoutError):
++            h._start_endpos_loop()
++        h._arm_group.enable.assert_not_called()
++        h._gripper_group.enable.assert_not_called()
++        h._robot.start_control_loop.assert_not_called()
++
++    def test_shutdown_blocks_future_enable_and_targets(self):
++        h = self.hardware()
++        h._enabled = False
++        h.shutdown()
++        with self.assertRaisesRegex(RuntimeError, "shutdown"):
++            h.enable()
++        with self.assertRaisesRegex(RuntimeError, "shutdown"):
++            h.set_joint_position_target(np.zeros(6))
++        h._arm_group.enable.assert_not_called()
++
++    def test_disabled_target_is_rejected(self):
++        h = self.hardware()
++        h._enabled = False
++        before = h._endpos_ctrl._q_target.copy()
++        with self.assertRaisesRegex(RuntimeError, "disabled"):
++            h.set_joint_position_target(np.zeros(6))
++        np.testing.assert_array_equal(h._endpos_ctrl._q_target, before)
++
++    def test_disabled_hold_does_not_read_or_update_targets(self):
++        h = self.hardware()
++        h._enabled = False
++        before = h._endpos_ctrl._q_target.copy()
++        np.testing.assert_array_equal(h.hold_current_position(), before)
++        h.get_joint_positions.assert_not_called()
++
++    def test_startup_cleanup_failure_does_not_claim_disabled(self):
++        h = self.hardware()
++        h._connected = False
++        h._robot.connect = Mock()
++        h._start_endpos_loop = Mock(side_effect=RuntimeError("enable fault"))
++        h._robot.disconnect.side_effect = RuntimeError("disable ACK missing")
++        with self.assertRaisesRegex(RuntimeError, "enable fault.*disable ACK missing"):
++            h.connect()
++        self.assertTrue(h.enabled)
++        self.assertEqual(h.state_machine, "ERROR")
++
++    def test_sender_timeout_keeps_stop_flag_set(self):
++        h = self.hardware()
++        h._endpos_ctrl._send_thread = Mock()
++        h._endpos_ctrl._send_thread.is_alive.return_value = True
++        with self.assertRaisesRegex(RuntimeError, "sender did not stop"):
++            h.stop_motion()
++        self.assertTrue(h._endpos_ctrl._stop_send.is_set())
++
++
++class NodeCleanupTest(unittest.TestCase):
++    def test_hardware_error_does_not_skip_executor_and_ros_cleanup(self):
++        module = importlib.import_module("rebotarmcontroller.rebotarm_controller")
++        node = Mock()
++        node.shutdown.side_effect = RuntimeError("cleanup fault")
++        executor = Mock()
++        executor.spin.side_effect = KeyboardInterrupt()
++        with patch.object(module, "reBotArmController", return_value=node), \
++                patch.object(module, "MultiThreadedExecutor", return_value=executor), \
++                patch.object(module.rclpy, "init"), patch.object(module.rclpy, "try_shutdown") as stop:
++            with self.assertRaisesRegex(RuntimeError, "cleanup fault"):
++                module.main()
++        executor.shutdown.assert_called_once()
++        node.destroy_node.assert_called_once()
++        stop.assert_called_once()
++
++
++class RosStopPathTest(unittest.TestCase):
++    def test_invalid_later_point_rejected_before_any_motion(self):
++        actions = self.actions()
++        goal = self.goal(actions)
++        actions._hardware.validate_joint_targets.side_effect = [None, ValueError("outside measured interval")]
++        actions.execute_follow_joint_trajectory(goal)
++        actions._hardware.begin_trajectory_stream.assert_not_called()
++        actions._hardware.set_joint_position_target.assert_not_called()
++        goal.abort.assert_called_once()
++
++    def actions(self):
++        from rebotarmcontroller.ros_actions import ArmActions
++        actions = object.__new__(ArmActions)
++        actions._node = Mock()
++        actions._hardware = Mock()
++        actions._hardware.enabled = True
++        actions._hardware.state_machine = "TRAJ_RUNNING"
++        actions._hardware.joint_names = [f"joint{i}" for i in range(1, 7)]
++        return actions
++
++    def goal(self, actions):
++        from control_msgs.action import FollowJointTrajectory
++        from trajectory_msgs.msg import JointTrajectoryPoint
++        request = FollowJointTrajectory.Goal()
++        request.trajectory.joint_names = actions._hardware.joint_names
++        first = JointTrajectoryPoint(positions=[0.0] * 6)
++        last = JointTrajectoryPoint(positions=[0.2] * 6)
++        last.time_from_start.sec = 1
++        request.trajectory.points = [first, last]
++        goal = Mock()
++        goal.request = request
++        return goal
++
++    def test_cancel_before_execution_does_not_start_control(self):
++        actions = self.actions()
++        goal = self.goal(actions)
++        goal.is_cancel_requested = True
++        actions.execute_follow_joint_trajectory(goal)
++        actions._hardware.begin_trajectory_stream.assert_not_called()
++        actions._hardware.set_joint_position_target.assert_not_called()
++        goal.canceled.assert_called_once()
++
++    def test_cancel_in_execution_precedes_next_target(self):
++        actions = self.actions()
++        goal = self.goal(actions)
++        with patch.object(type(goal), "is_cancel_requested", new_callable=PropertyMock,
++                          create=True, side_effect=[False, True]):
++            actions.execute_follow_joint_trajectory(goal)
++        actions._hardware.set_joint_position_target.assert_not_called()
++        actions._hardware.hold_current_position.assert_called_once()
++        goal.canceled.assert_called_once()
++
++    def test_disabled_arm_rejects_action_goal(self):
++        from rclpy.action import GoalResponse
++        actions = self.actions()
++        actions._hardware.enabled = False
++        actions._hardware.state_machine = "IDLE"
++        self.assertEqual(actions.arm_goal_callback(None), GoalResponse.REJECT)
++
++    def test_action_cleanup_preserves_hardware_error(self):
++        actions = self.actions()
++        goal = self.goal(actions)
++        goal.is_cancel_requested = False
++        def fail():
++            actions._hardware.state_machine = "ERROR"
++            raise RuntimeError("hardware fault")
++        actions._hardware.begin_trajectory_stream.side_effect = fail
++        actions.execute_follow_joint_trajectory(goal)
++        actions._hardware.set_state_machine.assert_not_called()
++        goal.abort.assert_called_once()
++
++    def test_disable_service_does_not_restart_gravity_hold(self):
++        from rebotarmcontroller.ros_services import ArmServices
++        services = object.__new__(ArmServices)
++        services._node = Mock()
++        services._hardware = Mock()
++        response = SimpleNamespace(success=False, message="")
++        services.disable(None, response)
++        services._hardware.disable.assert_called_once()
++        services._hardware.stop_gravity_compensation.assert_not_called()
++        self.assertTrue(response.success)
++
++    def test_hold_service_updates_hold_without_enabling_or_moving_home(self):
++        from rebotarmcontroller.ros_services import ArmServices
++        services = object.__new__(ArmServices)
++        services._node = Mock()
++        services._hardware = Mock(enabled=True, state_machine="IDLE")
++        response = SimpleNamespace(success=False, message="")
++        services.hold(None, response)
++        self.assertTrue(response.success)
++        services._hardware.request_position_hold.assert_called_once()
++        services._hardware.enable.assert_not_called()
++        services._hardware.safe_home.assert_not_called()
++
++    def test_hold_service_rejects_disabled_or_active_arm(self):
++        from rebotarmcontroller.ros_services import ArmServices
++        services = object.__new__(ArmServices)
++        services._node = Mock()
++        services._hardware = Mock()
++        services._hardware.request_position_hold.side_effect = RuntimeError("cancel active goals first")
++        response = SimpleNamespace(success=False, message="")
++        services.hold(None, response)
++        self.assertFalse(response.success)
++        self.assertIn("cancel active goals", response.message)
++
++
++if __name__ == "__main__":
++    unittest.main()

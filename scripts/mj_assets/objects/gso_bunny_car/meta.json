@@ -1,0 +1,44 @@
+{
+ "name_ja": "うさぎの木の車",
+ "name_en": "wooden bunny car",
+ "gso_name": "BUNNY_RACER",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.15,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.0916,
+  0.0881,
+  0.1117
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  58,
+  116,
+  113
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1554,
+ "collision_mass_split": [
+  0.0439,
+  0.322,
+  0.0785,
+  0.0078,
+  0.0085,
+  0.0165,
+  0.0036,
+  0.0071,
+  0.0045,
+  0.0016,
+  0.0564,
+  0.0451,
+  0.0493,
+  0.0545,
+  0.2528,
+  0.048
+ ]
+}

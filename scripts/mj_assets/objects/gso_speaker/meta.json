@@ -1,0 +1,44 @@
+{
+ "name_ja": "ワイヤレススピーカー",
+ "name_en": "wireless speaker",
+ "gso_name": "Logitech_Ultimate_Ears_Boom_Wireless_Speaker_Night_Black",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.54,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1036,
+  0.1028,
+  0.2606
+ ],
+ "graspable_guess": false,
+ "split": "battle",
+ "mean_bgr": [
+  176,
+  173,
+  172
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 644,
+ "collision_mass_split": [
+  0.0403,
+  0.0267,
+  0.0559,
+  0.0024,
+  0.0389,
+  0.0468,
+  0.0146,
+  0.0184,
+  0.1571,
+  0.1079,
+  0.0845,
+  0.0224,
+  0.0638,
+  0.1019,
+  0.1281,
+  0.0904
+ ]
+}

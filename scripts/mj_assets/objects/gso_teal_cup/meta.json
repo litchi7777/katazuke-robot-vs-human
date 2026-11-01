@@ -1,0 +1,44 @@
+{
+ "name_ja": "青緑のカップ",
+ "name_en": "teal cup",
+ "gso_name": "Cole_Hardware_Mug_Classic_Blue",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.3,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.1526,
+  0.1263,
+  0.0954
+ ],
+ "graspable_guess": false,
+ "split": "test",
+ "mean_bgr": [
+  127,
+  142,
+  75
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1748,
+ "collision_mass_split": [
+  0.0447,
+  0.0421,
+  0.0551,
+  0.033,
+  0.0288,
+  0.0326,
+  0.0534,
+  0.0296,
+  0.0686,
+  0.0928,
+  0.072,
+  0.0771,
+  0.1121,
+  0.1054,
+  0.0767,
+  0.076
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "name_ja": "レゴの箱",
+ "name_en": "small Lego set box",
+ "gso_name": "Lego_Friends_Mia",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.2,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.1971,
+  0.0915,
+  0.0739
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  134,
+  188,
+  207
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 912,
+ "collision_mass_split": [
+  0.0291,
+  0.0417,
+  0.0248,
+  0.0167,
+  0.02,
+  0.0338,
+  0.0508,
+  0.0036,
+  0.1039,
+  0.1227,
+  0.0778,
+  0.0511,
+  0.0263,
+  0.0519,
+  0.1119,
+  0.234
+ ]
+}

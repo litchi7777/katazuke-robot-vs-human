@@ -1,0 +1,7 @@
+.claude/
+__pycache__/
+*.pyc
+*.pt
+outputs/
+rebotarm_ros2
+third_party/

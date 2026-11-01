@@ -1,0 +1,44 @@
+{
+ "name_ja": "柄入りのボウル",
+ "name_en": "black patterned bowl",
+ "gso_name": "Now_Designs_Bowl_Akita_Black",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.38,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.1588,
+  0.1583,
+  0.0759
+ ],
+ "graspable_guess": false,
+ "split": "test",
+ "mean_bgr": [
+  187,
+  188,
+  186
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1652,
+ "collision_mass_split": [
+  0.048,
+  0.0446,
+  0.0327,
+  0.027,
+  0.0501,
+  0.0254,
+  0.0769,
+  0.1033,
+  0.052,
+  0.0649,
+  0.0616,
+  0.0621,
+  0.1014,
+  0.0931,
+  0.0734,
+  0.0835
+ ]
+}

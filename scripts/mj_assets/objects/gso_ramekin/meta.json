@@ -1,0 +1,41 @@
+{
+ "name_ja": "白いココット皿",
+ "name_en": "white ramekin",
+ "gso_name": "Threshold_Ramekin_White_Porcelain",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.25,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.1129,
+  0.1129,
+  0.0525
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  216,
+  214,
+  212
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg); mouth re-opened (hollow_scan.py: wall 4 mm, floor 6 mm)",
+ "visual_faces": 2176,
+ "collision_parts": 13,
+ "collision_faces": 808,
+ "collision_mass_split": [
+  0.2477,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627,
+  0.0627
+ ]
+}

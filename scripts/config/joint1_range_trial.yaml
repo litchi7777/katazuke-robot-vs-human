@@ -1,0 +1,24 @@
+# Only motor ID 1 is registered/enabled. Other axes must rest securely folded.
+# This configuration is for a small base rotation trial, without MoveIt.
+default_model: rs
+models:
+  rs:
+    sdk_config: rebotarm_rs.yaml
+    overrides:
+      name: reBotArm-RS-joint1-trial
+      joint1_only_trial: true
+      channel: can0
+      rate: 100
+      urdf_path: package://rebotarm_bringup/description/RS/urdf/ReBot_Arm_RS.urdf
+      end_effector_frame: gripper_end
+      groups:
+        arm:
+          joints: [joint1]
+      control:
+        arm_control_mode: mit
+        mit_kp: [50.0]
+        mit_kd: [3.0]
+      # Required by the common config validator; no gripper is registered.
+      gripper:
+        position_limits: {open: 2.7, close: 0.0}
+      gravity_compensation: {kp: 2.0, kd: 1.0}

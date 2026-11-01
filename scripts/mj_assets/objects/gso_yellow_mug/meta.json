@@ -1,0 +1,44 @@
+{
+ "name_ja": "黄色と白のマグカップ",
+ "name_en": "yellow and white mug",
+ "gso_name": "Room_Essentials_Mug_White_Yellow",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.32,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.128,
+  0.102,
+  0.1053
+ ],
+ "graspable_guess": false,
+ "split": "train",
+ "mean_bgr": [
+  165,
+  206,
+  217
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 0 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1774,
+ "collision_mass_split": [
+  0.0491,
+  0.0177,
+  0.0208,
+  0.0195,
+  0.0189,
+  0.0426,
+  0.0409,
+  0.0921,
+  0.0876,
+  0.0793,
+  0.0569,
+  0.0647,
+  0.0852,
+  0.0594,
+  0.1194,
+  0.1459
+ ]
+}

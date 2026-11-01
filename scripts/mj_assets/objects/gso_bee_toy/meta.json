@@ -1,0 +1,44 @@
+{
+ "name_ja": "蜂のおもちゃ",
+ "name_en": "bee pull toy",
+ "gso_name": "Fisher_price_Classic_Toys_Buzzy_Bee",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.12,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.2057,
+  0.1345,
+  0.1111
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  85,
+  129,
+  159
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1070,
+ "collision_mass_split": [
+  0.0375,
+  0.0224,
+  0.0175,
+  0.0431,
+  0.0129,
+  0.0056,
+  0.0075,
+  0.0079,
+  0.0047,
+  0.0027,
+  0.298,
+  0.0077,
+  0.0144,
+  0.189,
+  0.1028,
+  0.2262
+ ]
+}

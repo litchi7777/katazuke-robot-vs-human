@@ -1,0 +1,44 @@
+{
+ "name_ja": "金づち",
+ "name_en": "hammer",
+ "gso_name": "Cole_Hardware_Hammer_Black",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.45,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.2897,
+  0.095,
+  0.06
+ ],
+ "graspable_guess": true,
+ "split": "battle",
+ "mean_bgr": [
+  45,
+  64,
+  65
+ ],
+ "method": "import_gso.py: GSO scan, pose flat, physics-settled (tilt 2 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 862,
+ "collision_mass_split": [
+  0.0455,
+  0.0357,
+  0.0638,
+  0.037,
+  0.0951,
+  0.0051,
+  0.0104,
+  0.08,
+  0.0134,
+  0.0771,
+  0.0448,
+  0.16,
+  0.03,
+  0.1055,
+  0.0185,
+  0.178
+ ]
+}

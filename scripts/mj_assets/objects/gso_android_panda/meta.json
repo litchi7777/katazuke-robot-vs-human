@@ -1,0 +1,44 @@
+{
+ "name_ja": "パンダ柄のドロイド人形",
+ "name_en": "panda android figure",
+ "gso_name": "Android_Figure_Panda",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.09,
+ "friction": 0.6,
+ "soft": false,
+ "size_m": [
+  0.0565,
+  0.0476,
+  0.0758
+ ],
+ "graspable_guess": true,
+ "split": "test",
+ "mean_bgr": [
+  104,
+  100,
+  98
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1720,
+ "collision_mass_split": [
+  0.0193,
+  0.048,
+  0.0221,
+  0.007,
+  0.019,
+  0.0474,
+  0.1255,
+  0.0258,
+  0.0827,
+  0.0901,
+  0.1151,
+  0.1262,
+  0.0822,
+  0.0654,
+  0.0822,
+  0.0418
+ ]
+}

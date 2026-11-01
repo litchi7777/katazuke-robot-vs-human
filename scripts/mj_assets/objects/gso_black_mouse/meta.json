@@ -1,0 +1,44 @@
+{
+ "name_ja": "黒いマウス",
+ "name_en": "black computer mouse",
+ "gso_name": "Razer_Abyssus_Ambidextrous_Gaming_Mouse",
+ "license": "CC-BY 4.0 Google Scanned Objects",
+ "category": "keep",
+ "mass_kg": 0.09,
+ "friction": 0.5,
+ "soft": false,
+ "size_m": [
+  0.1456,
+  0.1004,
+  0.0385
+ ],
+ "graspable_guess": true,
+ "split": "train",
+ "mean_bgr": [
+  50,
+  45,
+  44
+ ],
+ "method": "import_gso.py: GSO scan, pose upright, physics-settled (tilt 1 deg)",
+ "visual_faces": 3000,
+ "collision_parts": 16,
+ "collision_faces": 1190,
+ "collision_mass_split": [
+  0.0363,
+  0.0533,
+  0.0787,
+  0.0505,
+  0.0073,
+  0.0015,
+  0.0201,
+  0.0428,
+  0.0195,
+  0.0028,
+  0.0902,
+  0.0449,
+  0.0824,
+  0.1469,
+  0.0863,
+  0.2364
+ ]
+}

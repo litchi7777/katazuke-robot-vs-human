@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-17",
+  "joint": "joint1",
+  "method": "manually moved with torque disabled; operator held at A/B and notified assistant",
+  "endpoint_A": {
+    "label": "A",
+    "recorded_wall_ns": 1792230628607161427,
+    "joint1_rad": -0.9877558946609497,
+    "joint1_deg": -56.59424395324114,
+    "joint1_min_max_rad": [
+      -0.9877985119819641,
+      -0.9876279830932617
+    ],
+    "joint1_span_rad": 0.00017052888870239258,
+    "sample_count_joint1": 20,
+    "observation_seconds": 2.003295670961961,
+    "pose_median_rad": {
+      "joint1": -0.9877558946609497,
+      "joint2": -0.0028975275345146656,
+      "joint3": 0.0028549102135002613,
+      "joint4": 0.0012655258178710938,
+      "joint5": 0.015723301097750664,
+      "joint6": 0.07650728523731232,
+      "gripper": 0.0007286399486474693
+    },
+    "source": "../joint1_manual_endpoint_A_1/summary.json",
+    "scope": "user-selected usable endpoint at current pose; not a mechanical hard stop or universal safe joint limit",
+    "motor_enable_or_motion_command": false
+  },
+  "endpoint_B": {
+    "label": "B",
+    "recorded_wall_ns": 1792230808132499017,
+    "joint1_rad": 0.5690216422080994,
+    "joint1_deg": 32.60253855012728,
+    "joint1_min_max_rad": [
+      0.5688938498497009,
+      0.5691921710968018
+    ],
+    "joint1_span_rad": 0.0002983212471008301,
+    "sample_count_joint1": 20,
+    "observation_seconds": 2.003612816974055,
+    "pose_median_rad": {
+      "joint1": 0.5690216422080994,
+      "joint2": -0.004005379043519497,
+      "joint3": 0.0028975207824259996,
+      "joint4": 0.0012655258178710938,
+      "joint5": 0.01702718809247017,
+      "joint6": 0.07646894454956055,
+      "gripper": 0.0007286399486474693
+    },
+    "source": "../joint1_manual_endpoint_B_1/summary.json",
+    "scope": "user-selected usable endpoint at current pose; not a mechanical hard stop or universal safe joint limit",
+    "motor_enable_or_motion_command": false
+  },
+  "operator_selected_interval_rad": [
+    -0.9877558946609497,
+    0.5690216422080994
+  ],
+  "operator_selected_interval_deg": [
+    -56.59424395324114,
+    32.60253855012728
+  ],
+  "span_rad": 1.556777536869049,
+  "span_deg": 89.19678250336842,
+  "other_joint_pose_change_between_endpoints_rad": {
+    "joint2": -0.0011078515090048313,
+    "joint3": 4.2610568925738335e-05,
+    "joint4": 0.0,
+    "joint5": 0.0013038869947195053,
+    "joint6": -3.834068775177002e-05,
+    "gripper": 0.0
+  },
+  "control_limits_modified": false,
+  "motor_enable_or_motion_command": false,
+  "scope": "operator-selected usable endpoints in current folded pose and cable/environment arrangement; not motor hard stops or a globally collision-free range",
+  "motion_trial_margin_not_yet_selected": true,
+  "acquisitions": [
+    {
+      "directory": "joint1_manual_range_1",
+      "status": "ok",
+      "successful_reads": 8414,
+      "error_frames": 0
+    },
+    {
+      "directory": "joint1_manual_endpoint_A_1",
+      "status": "ok",
+      "successful_reads": 154,
+      "error_frames": 0
+    },
+    {
+      "directory": "joint1_manual_range_2",
+      "status": "ok",
+      "successful_reads": 8414,
+      "error_frames": 0
+    },
+    {
+      "directory": "joint1_manual_endpoint_B_1",
+      "status": "ok",
+      "successful_reads": 154,
+      "error_frames": 0
+    }
+  ],
+  "successful_reads_total": 17136,
+  "error_frames_total": 0,
+  "can_state_after": "ERROR-ACTIVE",
+  "can_counters_after": {
+    "restarts": 0,
+    "bus_error": 0,
+    "arbitration_lost": 0,
+    "error_warning": 0,
+    "error_passive": 0,
+    "bus_off": 0
+  }
+}

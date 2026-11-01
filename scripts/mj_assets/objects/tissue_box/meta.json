@@ -1,0 +1,17 @@
+{
+ "name_ja": "ティッシュ箱（キムワイプ）",
+ "category": "fixture",
+ "mass_kg": 0.2,
+ "friction": 0.6,
+ "soft": false,
+ "source_image": "c4_00_video0.jpg",
+ "method": "cuboid with homography-rectified real photo faces: top and -y from all_run_3 overhead, -x from c4_00_video0, +x from c4_00_video4; +y and bottom plain white (never seen); size measured with the calibrated cameras",
+ "size_m": [
+  0.12,
+  0.116,
+  0.1
+ ],
+ "tissue_bulge_m": 0.02,
+ "visual_faces": 972,
+ "collision_faces": 12
+}
