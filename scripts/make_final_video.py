@@ -223,7 +223,7 @@ def soundtrack(path, seconds, sounds):
         n = min(len(e), len(out) - i)
         if n > 0:
             out[i:i + n] += e[:n]
-    out = np.clip(out, -1, 1)
+    out = np.clip(0.6 * out, -1, 1)
     with wave.open(str(path), "wb") as f:
         f.setnchannels(1)
         f.setsampwidth(2)
@@ -238,31 +238,33 @@ def main():
     TAPE = (755, 385)
 
     # The messy desk and the arm setting off
-    c.clip(v("real_20", 1), 0, 12)
+    c.clip(v("real_20", 1), 0, 6)
     c.card([("Claude は机を", 58, WHITE), ("どこまで片付けられるか", 64, YELLOW)], 2.8)
     c.still(RUNS / "real_20/attempt_01/look/preview/overlay.jpg", 3.0,
             [(0, 3.0, "note", "写真を見て、ゴミか残すかを決める")])
 
     c.level("LEVEL 1", "マーカー", "★")
     c.clip(v("real_6", 1), 98, 112, zoom=(700, 390, 1.0, 1.3))
-    c.sounds.append((c.clock, "ding"))
-    c.clip(v("real_6", 1), 114, 120, [(0.5, 3, "big", ("一発",))])
+    c.sounds.append((c.clock + 2.6, "ding"))
+    c.clip(v("real_6", 1), 118, 127, [(2.6, 4.5, "big", ("一発",))])
 
     c.level("LEVEL 2", "丸めたティッシュ", "★★")
     c.clip(v("real_20", 1), 205, 219, [(0.5, 6.5, "note", "柔らかい物も、ゴミはゴミ箱へ")])
     c.clip(v("real_20", 1), 236, 246)
 
     c.level("LEVEL 3", "マスキングテープ", "★★★")
-    c.clip(v("real_7", 1), 226, 244, [(1.5, 5, "big", ("空振り",))], zoom=(*TAPE, 1.4, 1.7))
-    c.sounds.append((c.clock - 7.5, "buzz"))
+    c.clip(v("real_7", 1), 226, 244, [(5.6, 9, "big", ("空振り",))], zoom=(*TAPE, 1.4, 1.7))
+    c.sounds.append((c.clock - 3.4, "buzz"))
     c.card([("指が穴の中に下りていた", 52, WHITE), ("", 16, WHITE), ("写真からテープを再現して、シミュレーションで練習", 32, CYAN)],
            3.6, "pop", c.frame(v("real_7", 1), 120))
-    c.clip(RUNS / "real_11/videos/sim_attempt_01_show.mp4", 12, 28,
-           [(0.5, 4, "claude", "縁をつまむ"), (4.5, 8, "big", ("持ち上がった", WHITE, 64))], badge="シミュレーション 2倍速")
+    sim = RUNS / "real_11/videos/sim_attempt_01_show.mp4"
+    c.clip(sim, 12, 20, [(0.3, 3.8, "claude", "縁をつまむ")], badge="シミュレーション 2倍速")
+    c.clip(sim, 43, 49, [(0.3, 3, "big", ("持ち上がった", WHITE, 64))], badge="シミュレーション 2倍速")
+    c.clip(sim, 61, 67, badge="シミュレーション 2倍速")
     c.card([("でも放せなかった", 50, WHITE), ("指に掛かったまま、戻ってきた", 34, WHITE), ("", 14, WHITE), ("実機ではどうか", 46, YELLOW)], 3.0, "buzz")
-    c.clip(v("real_12", 2), 96, 120, [(7, 12, "big", ("掴んだ",))], zoom=(*TAPE, 1.2, 1.5))
-    c.sounds.append((c.clock + 0.3, "ding"))
-    c.clip(v("real_12", 2), 130, 140, [(0.3, 5, "big", ("入った",))])
+    c.clip(v("real_12", 2), 104, 120, [(3, 8, "big", ("掴んだ",))], zoom=(*TAPE, 1.2, 1.5))
+    c.sounds.append((c.clock + 1.3, "ding"))
+    c.clip(v("real_12", 2), 130, 140, [(1.3, 5, "big", ("入った",))])
 
     c.level("LEVEL 4", "コップ", "★★★★")
     c.still(c.frame(v("real_18", 1), 40), 3.0, [(0, 3.0, "note", "最初の判定：ガラスなので触らない")], zoom=(640, 300, 1.0, 1.3))
@@ -270,9 +272,9 @@ def main():
     c.clip(v("real_18", 1), 116, 132, [(1, 6, "note", "縁をつまんだ")], zoom=(640, 330, 1.2, 1.4))
     c.clip(v("real_18", 1), 144, 158, [(1.5, 7, "robot", "運ぶ途中で滑り落ちた")], zoom=(200, 480, 1.2, 1.8))
     c.clip(v("real_18", 1), 176, 190, [(0.2, 3.4, "note", "実際は落としていない"), (3.5, 7, "note", "箱の上から、持ったまま戻っていく")], zoom=(200, 480, 1.4, 1.4))
-    c.clip(v("real_20", 1), 164, 178, [(0.5, 5, "note", "判定を直して、もう一度")])
-    c.sounds.append((c.clock + 3.8, "ding"))
-    c.clip(v("real_20", 1), 182, 193, [(3.8, 5.5, "big", ("今度は入った",))])
+    c.clip(v("real_20", 1), 170, 178, [(0.3, 4, "note", "判定を直して、もう一度")])
+    c.sounds.append((c.clock + 4.2, "ding"))
+    c.clip(v("real_20", 1), 182, 194, [(4.2, 5.5, "big", ("今度は入った",))])
 
     c.level("LEVEL 5", "ペットボトル", "★★★★★")
     c.clip(v("real_14", 4), 160, 172, zoom=(860, 300, 1.2, 1.5))
@@ -282,13 +284,13 @@ def main():
 
     c.level("LEVEL MAX", "ペンチ", "★★★★★★")
     c.clip(v("real_16", 2), 48, 58, [(0.3, 2.6, "robot", "指の開きより幅が広い"), (2.7, 5, "note", "一度も下りてこない")], zoom=(740, 500, 2.0, 2.2))
-    c.card([("ペンチは試しもしなかった", 52, RED), ("持ち手がV字に開いていて、幅18cmと見て諦めた", 30, WHITE)], 3.0, "buzz")
+    c.card([("ペンチは試しもしなかった", 52, RED), ("持ち手がV字に開いていて、幅10cmと見て諦めた", 30, WHITE)], 3.0, "buzz")
 
-    c.card([("総仕上げ", 44, YELLOW), ("6個まとめて", 72, WHITE), ("テープだけ2回目で", 30, CYAN)], 1.8)
+    c.card([("総仕上げ", 44, YELLOW), ("6個まとめて", 72, WHITE), ("テープだけ3回目で", 30, CYAN)], 1.8)
     c.still(c.frame(v("real_20", 1), 30), 2.0, badge="")
     c.clip(v("real_20", 1), 266, 276)
-    c.clip(v("real_22", 1), 68, 86, [(0.3, 4, "note", "最後のテープ"), (6.5, 9, "big", ("入った",))])
-    c.sounds.append((c.clock, "ding"))
+    c.clip(v("real_22", 1), 72, 89, [(0.3, 3, "note", "最後のテープ"), (6.8, 8.5, "big", ("入った",))])
+    c.sounds.append((c.clock - 1.7, "ding"))
     c.still(RUNS.parent / "final/final_desk.jpg", 2.8, [(0.2, 2.8, "big", ("机が空になった",))], zoom=(480, 300, 1.0, 1.15))
     c.card([("できた", 34, YELLOW), ("マーカー　テープ　コップ　箱　ティッシュ※", 36, WHITE), ("", 10, WHITE),
             ("できなかった", 34, RED), ("ペットボトル　ペンチ", 36, WHITE), ("", 10, WHITE),
