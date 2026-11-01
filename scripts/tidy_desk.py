@@ -63,7 +63,7 @@ TALLEST = 0.25          # m: heights are believed up to this
 TALL_TOP_BAND = 0.015   # m below a tall object's top a finger stop counts as on its side
 RIM_GAP = 0.04          # m finger gap astride a rim (a wall up to ~2 cm with room for aiming errors)
 RIM_WALL = 0.02         # m of rim between the fingers the planner allows for
-RIM_INSET = 0.008       # m inside the outer edge the pinch is centred (most walls are 3-15 mm)
+RIM_INSET = float(os.environ.get("TIDY_RIM_INSET", 0.008))       # m inside the outer edge the pinch is centred (most walls are 3-15 mm)
 RIM_STEP_DEG = 15       # deg between candidate pinch points round the rim
 RIM_BAND = 0.01         # m below the top a depth reading still counts as the rim
 RIM_ROUND = 1.2         # a rim point this much farther out than the rim's usual radius is a handle or a spout
@@ -86,6 +86,7 @@ PART_ROOM = 0.008       # m at most each finger opens beyond the piece
 PART_DEEPER = 0.5       # one cm deeper in the grip is worth this many cm farther from the centre
 LONG_END_KEEP = 0.02    # m a grasp moved along a long thing stays this far from its end
 PENDING = "pending"     # a page decision not given yet
+PLAN_MATCH = 0.08       # m: a judged thing this near a plan entry's place is that entry
 CONTAINER_WORDS = ("器", "ボウル", "椀", "カップ", "コップ", "マグ", "皿", "鉢", "ラメキン", "かご", "カゴ", "バケツ", "トレー")
 HOLLOW_DROP = 0.012     # m the middle of a container lies below its rim
 PART_SQUARE = math.radians(25)  # the piece's faces under the two finger halves may lean this much (not a wedge)  # m inside a cloth's edge the pinch is centred
@@ -240,11 +241,31 @@ class Desk:
         self.run_name = a.run_name or a.out.name
         self.rng = np.random.default_rng(a.seed + 99)
 
+    def apply_plan(self, objects):
+        """--plan (rehearse.py): the things the plan may touch get their rank and tactic; the rest stay on the desk."""
+        if not self.a.plan:
+            return
+        entries = [e for e in json.loads(Path(self.a.plan).read_text())["objects"] if e.get("ok")]
+        for rank, e in enumerate(entries):
+            near = [o for o in objects if o.get("xy") is not None and "plan_rank" not in o and o["category"] != "fixture"
+                    and math.dist(o["xy"], e["xy"]) < PLAN_MATCH]
+            if not near:
+                print(f"    計画の {e['name']} が机に見当たらない", flush=True)
+                continue
+            o = min(near, key=lambda x: math.dist(x["xy"], e["xy"]))
+            o["plan_rank"], o["plan_tactic"] = rank, e["tactic"]
+        left = [o["name"] for o in objects if "plan_rank" not in o and o["category"] != "fixture"]
+        if left:
+            print("    計画にない物は触らない（人に任せる）: " + "、".join(left), flush=True)
+
     # --- camera and judge --------------------------------------------
     def capture(self, name):
         path = self.a.out / f"{name}.jpg"
         self.frames += 1
-        if self.a.physics:
+        if self.a.physics and self.client is None:  # --preview: no arm process, one look at the desk as it lies
+            import mj_scene
+            mj_scene.snapshot(self.a.sim, path)
+        elif self.a.physics:
             self.send(f"render {path} video2", ("撮影",), 180)
         elif self.a.sim:
             sim_world.render(sim_world.load(self.a.sim), self.calib, path, seed=self.frames)
@@ -798,6 +819,11 @@ class Desk:
             edge = self.plan_rim(o, floor_z, top_z, tall_grip, clear, inset=SOFT_EDGE_INSET)
             if edge is not None:
                 return None, edge
+        if o.get("rim_first") and not soft:  # the tactic says: pinch its wall at the edge, whatever it is
+            rim = self.plan_rim(o, floor_z, top_z, tall_grip, clear)
+            if rim is not None:
+                return None, rim
+            print("    縁をつまむ場所が見つからないので、ふつうに掴む", flush=True)
         g0 = None
         # A long rigid thing touching a neighbour at one end is taken nearer its other end (2026-11-01 real:
         # a marker against the Kimwipes box was "blocked" twice, centre only).
@@ -1627,6 +1653,13 @@ class Desk:
             self.lessons_used = list(self.nb.last_lessons)
         else:
             tactic, why = desk_memory.default_tactic(verdict), "判定どおり"
+        if o.get("plan_tactic"):  # rehearse.py tried this on the twin
+            tactic, why = desk_memory.clamp_tactic(o["plan_tactic"], tactic), "リハーサルの作戦"
+        learned = json.loads(Path(os.environ["TIDY_LEARNED"]).read_text()) if os.environ.get("TIDY_LEARNED") else {}
+        for word, hint in learned.items():   # what earlier runs on the real arm found to work
+            if word in f"{o['name']}{o.get('kind', '')}":
+                tactic, why = desk_memory.clamp_tactic({**tactic, **hint}, tactic), "前の回で実機で成功した作戦"
+        self.rim_tactic = bool(tactic.get("rim"))
         log_entry["object_id"] = oid
         self.say(f"    作戦: {desk_memory.tactic_ja(tactic)}（{why}）")
         failures, dragged = 0, False
@@ -1917,6 +1950,11 @@ class Desk:
         return float((mask[v, u] > 0).mean()) > 0.25
 
     def holding(self):
+        if getattr(self, "rim_tactic", False):
+            return True   # a thin wall between the fingers reads as closed on nothing (2026-11-01: a cup carried fine)
+        return self.fingers_apart()
+
+    def fingers_apart(self):
         """True while the fingers stay open past their squeeze target, i.e. something is between them."""
         target = float(self.last_close.split("目標")[1].split("rad")[0])
         state = self.send("grip state", ("グリッパ: state",), 30)
@@ -2071,7 +2109,7 @@ class Desk:
             cmd = [sys.executable, "-u", str(HERE / "sim_arm.py"), "--world", a.sim, "--seed", str(a.seed)]
         else:
             cmd = [sys.executable, "-u", str(HERE / "arm_goto.py"), "--execute", "--gripper", "--correct",
-                   "--preflight", str(Path(a.preflight).resolve()), "--snap-cameras", "/dev/video4,/dev/video0"]
+                   "--preflight", str(Path(a.preflight).resolve()), "--snap-cameras", a.snap_cameras]
         cmd += ["--max-speed", str(a.max_speed), "--driver-config", str(Path(a.driver_config).resolve()),
                 "--min-tcp-z", str(ppa.TIP_REACH - ppa.PROBE_DEPTH - 0.002),
                 "--grip-open-max", str(a.grip_open_max), "--output-dir", str(a.out / "client")]
@@ -2094,6 +2132,7 @@ class Desk:
                     image = self.capture(f"round{round_no}/scene")
                 self.round_image = cv2.imread(str(image))
                 objects = self.judge(image, folder)
+                self.apply_plan(objects)
                 for o, other in attached_to_untouchable(objects):
                     if not cable_like(o):
                         # Only touching: taken with the fingers kept clear of it (battle 2026-11-01: boxes laid
@@ -2109,6 +2148,7 @@ class Desk:
                         and self.container_of(o["xy"]) is None
                         and not any(math.dist(o["xy"], xy) < GIVE_UP_RADIUS for xy, _ in self.given_up)
                         and (not self.a.only or o["category"] == self.a.only)
+                        and (not self.a.plan or "plan_rank" in o)
                         and not any(word in o["name"] for word in self.a.exclude)
                         and (not self.a.include or any(word in o["name"] for word in self.a.include))]
                 skipped = [o["name"] for o in objects if not o["should_grasp"] and o["category"] != "fixture"]
@@ -2124,7 +2164,7 @@ class Desk:
                     break
                 self.page_extra = self.page_others(objects, todo, image)
                 decisions = self.ask(round_no, todo, image)
-                todo.sort(key=lambda t: np.hypot(*t[1]["xy"]))
+                todo.sort(key=lambda t: t[1].get("plan_rank", np.hypot(*t[1]["xy"])))
                 self.round_items, self.decisions, self.finished = list(todo), decisions, {}
                 # What is left for a person (a mouse, a phone) or not taken this round is still in the way
                 # (sim 2026-10-28: a mouse the planner did not know about was pushed 3 cm).
@@ -2401,6 +2441,9 @@ def main(argv=None):
     p.add_argument("--record", help="physics: folder for the presentation videos")
     p.add_argument("--scatter", type=int, default=0, help="physics: things thrown back on the desk each round")
     p.add_argument("--notebook", help="experience notebook folder (knowledge carried between runs); none = no learning")
+    p.add_argument("--plan", help="plan.json from rehearse.py: only its things, in its order, with its tactics")
+    p.add_argument("--snap-cameras", default="/dev/video4,/dev/video0",
+                   help="real arm: side cameras grabbed during a pick; empty when something else records them")
     p.add_argument("--reflect", choices=("claude", "offline"), default="claude",
                    help="who reflects on a failed grasp: claude -p, or the fixed offline rules")
     p.add_argument("--run-name", help="name of this run in the notebook (default: the --out folder name)")

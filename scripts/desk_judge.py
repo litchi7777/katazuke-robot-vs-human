@@ -274,6 +274,12 @@ OVERLOOK_GROW = 15         # px a listed box is grown by (shadows and edges belo
 OVERLOOK_MIN_CELLS = 15    # samples (~240 px at 4 px): smaller is an edge or noise
 
 
+def person_said():
+    """What the person has told about things on this desk (a file, read each time): facts the photo cannot show."""
+    path = Path(os.environ.get("TIDY_PERSON_NOTES", ""))
+    return f"The person who owns this desk said: {path.read_text().strip()}\n\n" if path.is_file() else ""
+
+
 def _claude(prompt, schema, model, cwd, timeout=TIMEOUT_S):
     cmd = ["claude", "-p", prompt, "--allowedTools", "Read", "--output-format", "json",
            "--json-schema", json.dumps(schema)] + (["--model", model] if model else [])
@@ -333,7 +339,7 @@ def ask_fast(scene, out, calib, model="sonnet", advice="", recall=None, missed=N
         if known:
             return {"name": name, "bbox": bbox, **known, "recalled": True}
         try:
-            verdict = _claude(CROP_PROMPT.format(image=path, name=name, length=size[0], width=size[1],
+            verdict = _claude(person_said() + CROP_PROMPT.format(image=path, name=name, length=size[0], width=size[1],
                                                  rules=HOUSE_RULES, advice=advice), CROP_SCHEMA, model, out)
         except RuntimeError:
             verdict = {"kind": name, "category": "unsure", "category_reason": "判定できず", "should_grasp": False,

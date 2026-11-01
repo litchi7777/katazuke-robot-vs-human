@@ -89,8 +89,21 @@ def _gso_kinds():
     return kinds
 
 
+def _extra_kinds():
+    """The twins summon.py made for this desk ($TIDY_EXTRA_OBJECTS): what the judge said goes in meta.json."""
+    import mj_objects
+    kinds = {}
+    for k in mj_objects.EXTRA_KINDS:
+        m = mj_objects.meta(k)
+        kinds[k] = dict(name=m["name_ja"], size=tuple(m["size_m"]), bgr=tuple(m["mean_bgr"]), category=m["category"],
+                        force=m.get("force", 3), soft=m["soft"], min_force=1, max_force=5, mesh=k, mass=m["mass_kg"],
+                        should_grasp=m.get("should_grasp", True))
+    return kinds
+
+
 GSO_KINDS = _gso_kinds()
 CATALOG.update(GSO_KINDS)
+CATALOG.update(_extra_kinds())
 GSO_TRAIN = [k for k, v in GSO_KINDS.items() if v["split"] == "train"]
 GSO_TEST = [k for k, v in GSO_KINDS.items() if v["split"] == "test"]   # held out: never seen in training
 # 2026-10-28 all_run_3 round 1 as the camera saw it (centre, long-axis direction), plus two extras.

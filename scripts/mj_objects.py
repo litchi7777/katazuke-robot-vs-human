@@ -21,6 +21,7 @@ A drop-in for mj_scene._add_object's primitives: the body pos is the object's bo
     MUJOCO_GL=egl python3 mj_objects.py --gso [OUT.png]   # the same for the gso_* kinds (gso_preview.png)
 """
 import json
+import os
 from pathlib import Path
 
 import mujoco
@@ -28,14 +29,21 @@ import numpy as np
 
 OBJ_DIR = Path(__file__).resolve().parent / "mj_assets/objects"
 KINDS = sorted(p.name for p in OBJ_DIR.iterdir() if (p / "meta.json").exists()) if OBJ_DIR.exists() else []
+# One more folder of kinds, outside the tracked assets: the twins summon.py makes for one desk.
+EXTRA_DIR = Path(os.environ["TIDY_EXTRA_OBJECTS"]) if os.environ.get("TIDY_EXTRA_OBJECTS") else None
+EXTRA_KINDS = sorted(p.parent.name for p in EXTRA_DIR.glob("*/meta.json")) if EXTRA_DIR else []
 GSO_KINDS = [k for k in KINDS if k.startswith("gso_")]   # scanned household objects (import_gso.py)
 # mj_scene / sim_world kind names -> mesh kind
 ALIASES = {"marker": "purple_marker", "pen": "black_marker", "tissue": "paper", "piece": "shogi_piece",
            "box": "crushed_box"}
 
 
+def kind_dir(kind):
+    return EXTRA_DIR / kind if kind in EXTRA_KINDS else OBJ_DIR / kind
+
+
 def meta(kind):
-    return json.loads((OBJ_DIR / kind / "meta.json").read_text())
+    return json.loads((kind_dir(kind) / "meta.json").read_text())
 
 
 # Crumpled paper squashes, so fingers sink in: a soft contact zone `width` m deep starting at impedance
@@ -64,7 +72,7 @@ def _spec_of(body):
 
 def collision_files(kind):
     """The convex collision meshes of a kind: [collision.obj], or collision_0.obj, collision_1.obj, ..."""
-    d = OBJ_DIR / kind
+    d = kind_dir(kind)
     if (d / "collision.obj").exists():
         return [d / "collision.obj"]
     return sorted(d.glob("collision_*.obj"), key=lambda p: int(p.stem.split("_")[1]))
@@ -72,7 +80,7 @@ def collision_files(kind):
 
 def _assets(spec, kind, textured):
     """Mesh / texture / material assets for a kind, added once per spec."""
-    d = OBJ_DIR / kind
+    d = kind_dir(kind)
     files = collision_files(kind)
     names = dict(vis=f"objmesh_{kind}_vis", tex=f"objtex_{kind}", mat=f"objmat_{kind}",
                  col=[f"objmesh_{kind}_col"] if len(files) == 1 else
@@ -92,7 +100,7 @@ def _assets(spec, kind, textured):
     return names
 
 
-def add_mesh_object(spec_body, kind, rgba=None, spec=None, name=None, mass=None):
+def add_mesh_object(spec_body, kind, rgba=None, spec=None, name=None, mass=None, friction=None):
     """Add the object's meshes to an MjsBody (normally a free body, pos = bottom centre on the desk).
 
     visual: group 1, contype/conaffinity 0, massless, textured (or plain `rgba` if given / no texture).
@@ -122,7 +130,7 @@ def add_mesh_object(spec_body, kind, rgba=None, spec=None, name=None, mass=None)
         gname = (f"{base}_col" if k == 0 else f"{base}_col{k}") if base else ""
         cols.append(spec_body.add_geom(name=gname, type=mujoco.mjtGeom.mjGEOM_MESH, meshname=mesh,
                                        contype=1, conaffinity=3, condim=4, group=3, mass=total * share,
-                                       friction=[m["friction"], 0.01, 0.001], rgba=[0.9, 0.3, 0.3, 0.4]))
+                                       friction=[friction or m["friction"], 0.01, 0.001], rgba=[0.9, 0.3, 0.3, 0.4]))
     if m.get("soft"):
         # Crumpled paper is rough: more friction than the photo-made meta says.
         import os

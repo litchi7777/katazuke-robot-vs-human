@@ -50,7 +50,7 @@ CROP_SIDE = 240           # px, saved crop thumbnails
 # --- tactics ----------------------------------------------------------
 OPENINGS = ("snug", "wide")
 TURNS = (0, 90)
-TACTIC_KEYS = ("force", "opening", "soft", "turn", "sweep_first")
+TACTIC_KEYS = ("force", "opening", "soft", "turn", "sweep_first", "rim")
 SUCCESS_PREFIX = "moved_to_"
 RETHINK_RESULTS = ("slipped", "not_taken", "too_wide", "too_flat", "stalled")  # failures that are not just aim
 RETIRE_AFTER = 2          # failures after following a lesson (more than its successes) that retire it
@@ -92,7 +92,8 @@ TACTIC_SCHEMA = {"type": "object", "properties": {
     "opening": {"type": "string", "enum": list(OPENINGS)},
     "soft": {"type": "boolean"},
     "turn": {"type": "integer", "enum": list(TURNS)},
-    "sweep_first": {"type": "boolean"}}}
+    "sweep_first": {"type": "boolean"},
+    "rim": {"type": "boolean"}}}
 CONSOLIDATE_OVER = 4      # active lessons for one kind above which they are merged
 CONSOLIDATE_SCHEMA = {"type": "object", "properties": {"lessons": {"type": "array", "items": {
     "type": "object", "properties": {"text": {"type": "string"}, "tactic_hint": TACTIC_SCHEMA},
@@ -121,7 +122,7 @@ REFLECT_SCHEMA = {"type": "object", "properties": {
     "required": ["why", "lesson", "next_tactic", "give_up", "give_up_reason"]}
 
 REFLECT_PROMPT = """You are the coach of a desk-tidying robot: a 6-axis arm with a two-finger parallel
-gripper (fingers open up to about 10 cm) that picks each object from straight above and drops it in a
+gripper (fingers open up to about 7.7 cm) that picks each object from straight above and drops it in a
 box. It keeps an experience notebook; your answer becomes a lesson in it. Answer every text field in
 Japanese, short and concrete (why under 40 characters, lesson text under 60). The person reading them
 does not read English: write the settings in Japanese words (力を上げる, 指を広く開く, 指の向きを90度回す,
@@ -148,6 +149,7 @@ The robot can ONLY change these tactic settings - nothing else (no new motions, 
 - soft true (squeeze whatever part the fingers reach; for squashy things) or false (reach around it)
 - turn 0 (fingers close across the short side) or 90 (finger line rotated 90 degrees: across the long side)
 - sweep_first true (first drag the object toward the robot's base along the desk, then grasp) or false.
+- rim true (pinch the wall of the thing at its edge, one finger inside it and one outside, instead of reaching around its middle) or false
   It only works for objects farther than about 43 cm from the base (it pulls them in to ~43 cm); for
   nearer ones it is skipped, and it cannot separate two things that touch.
 The object is about {reach} cm from the robot's base.
@@ -288,7 +290,7 @@ def default_tactic(verdict=None):
     """What the judge's verdict alone says: its force, soft for deformable things, nothing special."""
     verdict = verdict or {}
     return {"force": _as_force(verdict.get("force"), 3), "opening": "snug",
-            "soft": _as_bool(verdict.get("deformable"), False), "turn": 0, "sweep_first": False}
+            "soft": _as_bool(verdict.get("deformable"), False), "turn": 0, "sweep_first": False, "rim": False}
 
 
 def clamp_tactic(t, base=None):
@@ -302,7 +304,8 @@ def clamp_tactic(t, base=None):
             "opening": _as_opening(t.get("opening"), base["opening"]),
             "soft": _as_bool(t.get("soft"), base["soft"]),
             "turn": _as_turn(t.get("turn"), base["turn"]),
-            "sweep_first": _as_bool(t.get("sweep_first"), base["sweep_first"])}
+            "sweep_first": _as_bool(t.get("sweep_first"), base["sweep_first"]),
+            "rim": _as_bool(t.get("rim"), base["rim"])}
 
 
 def clamp_hint(h):
@@ -320,6 +323,8 @@ def tactic_ja(t):
     words = [f"力{t['force']}", "広く開く" if t["opening"] == "wide" else "ぴったり開く"]
     if t["soft"]:
         words.append("届いた所をつまむ")
+    if t["rim"]:
+        words.append("縁をつまむ")
     if t["turn"] == 90:
         words.append("指の向きを90度回す")
     words.append("手前に引き寄せてから" if t["sweep_first"] else "真上から")
@@ -358,6 +363,7 @@ def apply_tactic(o, tactic):
     out["turn"] = t["turn"]
     out["open_wide"] = t["opening"] == "wide"
     out["sweep_first"] = t["sweep_first"]
+    out["rim_first"] = t["rim"]
     if t["turn"] == 90:
         ax, ay = (o.get("axis_xy") or [1.0, 0.0])[:2]
         out["axis_xy"] = [-float(ay), float(ax)]
@@ -807,7 +813,7 @@ def _history_text(history):
 
 
 def reflect(notebook, obj, tactic, result, images, history, model="sonnet", cwd=HERE, timeout=REFLECT_TIMEOUT_S,
-            reach_cm=None):
+            reach_cm=None, extra=""):
     """Ask Claude (one claude -p call) why the attempt went as it did and what to try next.
 
     Falls back to reflect_offline when Claude does not answer. next_tactic and the lesson's hint
@@ -832,7 +838,7 @@ def reflect(notebook, obj, tactic, result, images, history, model="sonnet", cwd=
         lessons=lessons_text, images="\n".join(f"- {Path(p).resolve()}" for p in images) or "(no pictures)",
         give_up_after=GIVE_UP_AFTER, reach="?" if reach_cm is None else f"{reach_cm:.0f}")
     try:
-        reply = desk_judge._claude(prompt, REFLECT_SCHEMA, model, str(cwd), timeout=timeout)
+        reply = desk_judge._claude(prompt + extra, REFLECT_SCHEMA, model, str(cwd), timeout=timeout)
     except (RuntimeError, OSError, ValueError):
         return reflect_offline(obj, t, result, history)
     lesson = reply.get("lesson") if isinstance(reply.get("lesson"), dict) else {}

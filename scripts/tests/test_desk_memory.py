@@ -86,7 +86,7 @@ class TacticTests(unittest.TestCase):
     def test_clamp_repairs_garbage(self):
         t = dm.clamp_tactic({"force": "9", "opening": "FULL", "soft": "true", "turn": 270, "sweep_first": None,
                              "extra": 1})
-        self.assertEqual(t, {"force": 5, "opening": "wide", "soft": True, "turn": 90, "sweep_first": False})
+        self.assertEqual(t, {"force": 5, "opening": "wide", "soft": True, "turn": 90, "sweep_first": False, "rim": False})
         self.assertEqual(dm.clamp_tactic("nonsense"), dm.default_tactic())
         self.assertEqual(dm.clamp_tactic({"force": -3, "turn": "sideways", "opening": 7})["force"], 1)
         self.assertEqual(dm.clamp_tactic({"turn": 180})["turn"], 0)
@@ -95,7 +95,7 @@ class TacticTests(unittest.TestCase):
 
     def test_default_follows_the_judge(self):
         self.assertEqual(dm.default_tactic(VERDICT_PAPER),
-                         {"force": 2, "opening": "snug", "soft": True, "turn": 0, "sweep_first": False})
+                         {"force": 2, "opening": "snug", "soft": True, "turn": 0, "sweep_first": False, "rim": False})
         self.assertEqual(dm.tactic_ja(dm.default_tactic(VERDICT_PEN)), "力3・ぴったり開く・真上から")
 
     def test_apply_tactic_turns_the_axis(self):
@@ -251,7 +251,7 @@ class ReflectTests(unittest.TestCase):
             self.assertIn("/tmp/aim.jpg", prompt)
             self.assertIn("fell out of the fingers", prompt)
             self.assertEqual(r["next_tactic"], {"force": 5, "opening": "snug", "soft": False, "turn": 90,
-                                                "sweep_first": False})
+                                                "sweep_first": False, "rim": False})
             self.assertLessEqual(len(r["why"]), 40)
             self.assertEqual((r["lesson"]["kind"], r["lesson"]["tactic_hint"]), ("消しゴム", {"force": 4}))
             lid = nb.learn(self.OBJ, r, source_episode=0)

@@ -168,12 +168,13 @@ def build(world, calibs=CALIBS, markers=False):
         _add_marker(spec, cams["video2"]["T_link_marker"], cams["video2"]["marker_link"])
     for name, calib in cams.items():
         _add_camera(w, name, calib)
-    # A presentation camera for the video, from the front-right, a little above the desk.
-    pos, look = np.array([0.55, 0.0, 1.35]), np.array([0.0, 0.03, -0.05])
+    # A presentation camera for the video: from the right and in front, above the desk, so that the arm, the
+    # thing and both boxes are seen with their depth. Nothing but the video uses it.
+    pos, look = np.array([0.6655, 0.7335, 0.8535]), np.array([0.05, 0.0, 0.05])
     f = (look - pos) / np.linalg.norm(look - pos)
     x = np.cross(f, [0, 0, 1])
     x /= np.linalg.norm(x)
-    w.add_camera(name="show", pos=pos.tolist(), xyaxes=list(x) + list(np.cross(x, f)), fovy=55)
+    w.add_camera(name="show", pos=pos.tolist(), xyaxes=list(x) + list(np.cross(x, f)), fovy=45)
     return spec
 
 
@@ -260,7 +261,7 @@ def _add_object(w, o):
         import mj_objects
         # mass: heavier than it looks (heavy_block); split over the parts of a multi-part (GSO) model
         mj_objects.add_mesh_object(body, o["mesh"], rgba=list(o["rgba"]) if o.get("rgba") else None,
-                                   spec=_SPEC[-1], mass=o.get("mass"))
+                                   spec=_SPEC[-1], mass=o.get("mass"), friction=o.get("friction"))
         return
     soft = o.get("soft")
     parts = _parts(o)
@@ -458,6 +459,17 @@ class Cameras:
         height = (pts.reshape(-1, 4) @ T[2]).reshape(depth.shape).astype(np.float32)
         lens = self.lens[camera]
         return cv2.remap(height, lens.map_x, lens.map_y, cv2.INTER_NEAREST, borderValue=0.0)
+
+
+def snapshot(world_path, path, camera="video2", seconds=1.0):
+    """One frame of a world file as the camera sees it, the arm folded (tidy_desk --preview on the MuJoCo desk)."""
+    import cv2
+    model = build(json.loads(Path(world_path).read_text())).compile()
+    data = mujoco.MjData(model)
+    for _ in range(int(seconds / model.opt.timestep)):
+        mujoco.mj_step(model, data)
+    mujoco.mj_forward(model, data)
+    cv2.imwrite(str(path), Cameras(model).render(data, camera), [cv2.IMWRITE_JPEG_QUALITY, 95])
 
 
 def main():
