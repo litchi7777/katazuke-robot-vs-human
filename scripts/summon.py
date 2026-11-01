@@ -38,7 +38,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "mj_assets/tools"))
 HUNYUAN_PY = os.environ.get("HUNYUAN_PY", os.path.expanduser("~/Hunyuan3D-2.1/.venv/bin/python"))
-GPU = os.environ.get("TIDY_SAM_GPU", "GPU-99571e8f-28bd-4db3-dadb-aea80850be59")  # GPU1 by UUID: index 1 hangs
+GPU = os.environ.get("TIDY_SAM_GPU", "0")   # which GPU Hunyuan3D uses
 SITE = Path.home() / ".cache/rebot_summon/site"   # coacd lives here (pip --target), not in a venv
 GPU_LOCK = Path.home() / ".cache/rebot_summon/gpu.lock"   # one Hunyuan at a time
 INPUT_SIDE = 512     # px, long side of the crop handed to Hunyuan
@@ -356,8 +356,12 @@ def run_hunyuan(jobs, folder):
     GPU_LOCK.parent.mkdir(parents=True, exist_ok=True)
     with open(GPU_LOCK, "w") as lock, open(folder / "hunyuan.log", "w") as log:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        proc = subprocess.Popen([HUNYUAN_PY, str(HERE / "summon_worker.py"), str(path)], stdout=subprocess.PIPE,
-                                stderr=log, text=True, env=env)
+        try:
+            proc = subprocess.Popen([HUNYUAN_PY, str(HERE / "summon_worker.py"), str(path)], stdout=subprocess.PIPE,
+                                    stderr=log, text=True, env=env)
+        except OSError:   # no Hunyuan3D here: every object falls back to its extruded outline
+            say("  Hunyuan3D がないので、輪郭の押し出しで作る")
+            return False
         done = 0
         for line in proc.stdout:
             log.write(line)

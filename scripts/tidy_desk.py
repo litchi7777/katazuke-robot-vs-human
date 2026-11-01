@@ -994,6 +994,7 @@ class Desk:
         self.held_reach = held_reach(o)
         stands_on = floor_z
         reason, plan = self.plan_pick(o, floor_z)
+        self.rim_tactic = bool(plan and plan.get("rim") and not plan.get("part"))
         if reason:
             return reason
         c, axis, soft, top_z, fit, g0 = (plan[k] for k in ("c", "axis", "soft", "top_z", "fit", "g0"))
@@ -1033,7 +1034,7 @@ class Desk:
                 steps = self.coarse_approach(poses, steps) + steps
                 # A thin thing on the desk: straight down to just over the desk, no contact sensing (the user,
                 # 2026-11-01: "机の高さまで下げて普通につかんだらいいでしょ" after a pen 43 cm out was grasped at
-                # 17 mm on a false contact, the stretched arm lagging its track). A real block still stops a step.
+                # 17 mm on a false contact, the stretched arm lagging its track). Nothing here feels for contact: it trusts the height, so a thing judged thin wrongly is pressed on until the tracking guard stops the arm.
                 direct = (floor_z == 0.0 and top_z - floor_z < THIN_DIRECT and not plan.get("rim")
                           and not plan["tall_grip"])
                 if direct:
@@ -1655,11 +1656,10 @@ class Desk:
             tactic, why = desk_memory.default_tactic(verdict), "判定どおり"
         if o.get("plan_tactic"):  # rehearse.py tried this on the twin
             tactic, why = desk_memory.clamp_tactic(o["plan_tactic"], tactic), "リハーサルの作戦"
-        learned = json.loads(Path(os.environ["TIDY_LEARNED"]).read_text()) if os.environ.get("TIDY_LEARNED") else {}
-        for word, hint in learned.items():   # what earlier runs on the real arm found to work
-            if word in f"{o['name']}{o.get('kind', '')}":
-                tactic, why = desk_memory.clamp_tactic({**tactic, **hint}, tactic), "前の回で実機で成功した作戦"
-        self.rim_tactic = bool(tactic.get("rim"))
+        elif Path(os.environ.get("TIDY_LEARNED", "/nonexistent")).is_file():   # a person's notes: {"word": {tactic settings}}
+            for word, hint in json.loads(Path(os.environ["TIDY_LEARNED"]).read_text()).items():
+                if word in f"{o['name']}{o.get('kind', '')}":
+                    tactic, why = desk_memory.clamp_tactic({**tactic, **hint}, tactic), "人が渡した作戦"
         log_entry["object_id"] = oid
         self.say(f"    作戦: {desk_memory.tactic_ja(tactic)}（{why}）")
         failures, dragged = 0, False
@@ -1724,7 +1724,7 @@ class Desk:
                         result = "not_taken"
                     else:
                         involved = [key] + [k for k, _ in gone if k != key]
-                        trash_ok = all(self.decisions.get(k) == "discard" for k in involved)
+                        trash_ok = all(self.latest_choice(k, self.decisions.get(k)) == "discard" for k in involved)
                         box = "trash" if trash_ok and "trash" in self.boxes else "keep"
                         names = "、".join(x["name"] for k, x in self.round_items if k in involved)
                         print(f"    何を掴んだか確定できない（候補: {names}）→ {'ゴミ箱' if box == 'trash' else '保管箱'}へ",
@@ -1851,72 +1851,6 @@ class Desk:
         cv2.imwrite(str(self.a.out / f"{key}_aim{attempt}.jpg"), img)
         return True
 
-    def _unused_old_attempt_loop(self, key, o, dest, log_entry, force, floor_z):
-        if self.round_image is not None:
-            fresh = self.capture(f"{key}_before")
-            before = dict(o)
-            if self.occluded(o, self.arm_shadow(fresh)):
-                print("    アームの陰で見えないので、前に見つけた位置で掴みにいく", flush=True)
-            elif self.relocate(o, fresh):
-                print(f"    掴む直前の位置: ({o['xy'][0]:+.3f}, {o['xy'][1]:+.3f})", flush=True)
-            else:  # not found now: keep what we knew (it may only be hard to see)
-                o.clear()
-                o.update(before)
-                print("    今は見つからないので、前に見つけた位置で掴みにいく", flush=True)
-        for attempt in (1, 2, 3):
-            tries = []
-            log_entry.setdefault("attempts", []).append({"force": force, "tries": tries})
-            print(f"  [{attempt}] {o['name']} を力{force}で掴みにいく", flush=True)
-            result = self.pick(o, floor_z, force, tries)
-            log_entry["attempts"][-1]["pick"] = result
-            if result in ("unreachable", "too_wide", "blocked", "too_far", "too_flat"):
-                return result
-            if result == "held":
-                # Straight to the box; the desk photo is taken there (the arm is behind the base, out of view).
-                self.go_to_drop(dest)
-            else:
-                self.clear_view(o)  # up, and back toward the base, then look again
-            check = self.capture(f"{key}_check{attempt}")
-            if result == "held":
-                if not self.soft_hold and not self.holding():
-                    # It slipped out on the way: the fingers closed onto their target. One more level.
-                    print("    運ぶ途中で滑り落ちた", flush=True)
-                    force = min(5, force + 1)
-                else:
-                    hidden = self.arm_shadow(check)
-                    gone = [(k, x) for k, x in self.round_items
-                            if k not in self.finished and not self.occluded(x, hidden)
-                            and self.left_desk(x, check)]
-                    log_entry["attempts"][-1]["gone"] = [k for k, _ in gone]
-                    if [k for k, _ in gone] == [key]:
-                        self.release_here()
-                        return f"moved_to_{dest}"
-                    if not gone and self.soft_hold:
-                        # Soft thing closed on but still on the desk: it was not taken.
-                        print("    指は閉じたが、机から消えていない（掴めていない）", flush=True)
-                        self.send(f"grip open {self.release_open():.3f}", ("グリッパ",), 30)
-                    # Unclear what is in the fingers. Discarding a kept thing is the worst mistake,
-                    # so the trash box only when everything that may be held was approved for it.
-                    involved = [key] + [k for k, _ in gone if k != key]
-                    trash_ok = all(self.decisions.get(k) == "discard" for k in involved)
-                    box = "trash" if trash_ok and "trash" in self.boxes else "keep"
-                    names = "、".join(x["name"] for k, x in self.round_items if k in involved)
-                    print(f"    何を掴んだか確定できない（候補: {names}）→ {'ゴミ箱' if box == 'trash' else '保管箱'}へ",
-                          flush=True)
-                    if box != dest:
-                        self.send("home", ("到達",))
-                        self.go_to_drop(box)
-                    self.release_here()
-                    for k, _ in gone:
-                        self.finished[k] = f"moved_to_{box}"
-                    if key in [k for k, _ in gone] or not gone:
-                        return f"moved_to_{box}"
-                    # fall through: find the target again before the next attempt
-            # Re-locate (a failed grasp may have moved or dropped it) before the next attempt.
-            if not self.relocate(o, check):
-                return "lost"
-            print(f"    探し直した位置: ({o['xy'][0]:+.3f}, {o['xy'][1]:+.3f})", flush=True)
-        return "failed"
 
     def arm_shadow(self, image):
         """Image mask of where the arm itself is in this frame (it may hide desk objects)."""

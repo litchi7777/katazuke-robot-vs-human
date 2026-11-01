@@ -3,7 +3,7 @@
 
 Runs in the Hunyuan venv (not the robot's python), started by summon.py:
 
-    CUDA_VISIBLE_DEVICES=GPU-99571e8f-28bd-4db3-dadb-aea80850be59 ~/Hunyuan3D-2.1/.venv/bin/python \
+    CUDA_VISIBLE_DEVICES=0 ~/Hunyuan3D-2.1/.venv/bin/python \
         summon_worker.py JOBS.json
 
 JOBS.json: [{"image": "x_rgba.png", "out": "x_raw.obj", "out_visual": "x_vis.obj", "seed": 0}, ...]. Prints SHAPE_DONE / SHAPE_FAIL per job.

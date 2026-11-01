@@ -9,7 +9,7 @@ HOME_TOLERANCE=0.25    # rad on every arm joint
 mkdir -p "$CTL"
 cd "$HERE"
 unset CONDA_PREFIX
-source ./ros2_env.sh
+source ./ros2_env.sh || exit 1
 export PATH=/usr/bin:$PATH
 
 if [ -f "$CTL/driver.pid" ] && kill -0 "$(cat "$CTL/driver.pid")" 2>/dev/null; then
@@ -23,6 +23,11 @@ PY
     for _ in $(seq 1 30); do kill -0 "$(cat "$CTL/driver.pid")" 2>/dev/null || break; sleep 0.5; done
     rm -f "$CTL/driver.pid"
     sleep 2
+fi
+
+if timeout 3 ros2 topic echo --once --field position "/$NS/joint_states" > /dev/null 2>&1; then
+    echo "別のドライバーが動いている。止めてからやり直す" >&2
+    exit 1
 fi
 
 n=$(date +%s)

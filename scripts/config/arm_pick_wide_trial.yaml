@@ -1,7 +1,7 @@
 # 10/28 widened limits (reach_map.py: self- and desk-collision checked; keep grasps within 0.55 m,
-# where joint2 gravity stays <= 10.2 N*m vs 10.7 N*m already run). Gripper open still 1.6 until measured.
+# where joint2 gravity stays <= 10.2 N*m vs 10.7 N*m already run). Gripper open limit: 4.5 rad.
 # All six arm motors (ID 1-6) are enabled and hold; the client moves one joint
-# in small steps. The gripper (ID 7) is never registered or enabled.
+# in small steps. The gripper is motor ID 7.
 # Shogi tidy-up with the soft gripper: arm limits as arm_move_trial.yaml plus
 # motor 7 with low MIT gains. Closing torque ~= kp * (commanded past contact).
 # Folded <-> hover <-> grasp height above the near rows, gripper pointing down.

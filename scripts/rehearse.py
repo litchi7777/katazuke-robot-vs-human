@@ -11,7 +11,7 @@ The simulation has no limit worth counting (--sim-limit is only there to stop a 
 limits the arm. An object with no successful rehearsal stays out of the plan, for a person.
 
     source /opt/ros/humble/setup.bash
-    export MUJOCO_GL=egl TIDY_SAM_GPU=GPU-99571e8f-28bd-4db3-dadb-aea80850be59 MJ_FINGER_KP=1200
+    export MUJOCO_GL=egl TIDY_SAM_GPU=0 MJ_FINGER_KP=1200
     python3 rehearse.py --look LOOK_DIR --out OUT                # a look already taken: twin, rehearsals, plan
     python3 rehearse.py --world WORLD.json --out OUT [--execute] # a simulated "real" desk (WORLD itself is not changed)
     python3 rehearse.py --real --out OUT                         # camera only: photo, twin, rehearsals, plan
@@ -339,7 +339,7 @@ def rehearse_all(a, look_dir, folder, feedback):
     for o in world["objects"]:
         v = judged[tuple(o["look_xy"])]
         verdict = {k: v[k] for k in ("force", "deformable", "size_cm", "category", "should_grasp", "kind", "force_reason",
-                                     "grasp_point") if k in v}
+                                     "grasp_point", "category_reason", "grasp_reason", "confidence", "ask_human") if k in v}
         x0, y0, x1, y1 = v["bbox"]
         crop = crops / f"{o['id']}.jpg"
         cv2.imwrite(str(crop), img[max(0, y0 - 25):y1 + 25, max(0, x0 - 25):x1 + 25])

@@ -44,19 +44,26 @@
 
 ## 動かし方
 
-ROS 2 Humble の Ubuntu 22.04 で確認しています。シミュレーションだけなら実機は要りません。
+Ubuntu 22.04、ROS 2 Humble で確認しています。シミュレーションだけなら実機は要りません。
 
 ### 準備
 
-アームのモデルとドライバーは、再配布せずに元のリポジトリから取り寄せて、差分を当てます。
+アームのモデルとドライバーは再配布せず、元のリポジトリから固定コミットで取り寄せて、差分を当てます。実機では、差分に入っているグリッパーの開き幅の上限が必須です。
 
 ```bash
-git clone https://github.com/Seeed-Projects/reBotArmController_ROS2.git rebotarm_ros2
-git -C rebotarm_ros2 checkout 7506dc0fc5c2a7787dcb974d89d13f9f49d16d61
+vcs import < dependencies.repos    # rebotarm_ros2、reBotArm_control_py、motorbridge を取得
 git -C rebotarm_ros2 apply ../patches/rebotarm_ros2-local.patch
+git -C rebotarm_ros2/third_party/reBotArm_control_py -c core.whitespace=cr-at-eol apply ../../../patches/rebotarm-sdk-safety.patch
+bash scripts/build_motorbridge_local.sh    # 実機のみ。Rust が要る
+(cd rebotarm_ros2 && colcon build)         # 実機のみ
 ```
 
-Python の主な依存は `mujoco`、`pinocchio`、`opencv-python`、`numpy`、`ultralytics` です。判定には [Claude Code](https://claude.com/claude-code) の `claude` コマンドを使います。SAM の重み `sam2.1_b.pt` は、ultralytics が取得するものを `scripts/` に置いてください。
+Python の依存は `mujoco`、`pinocchio`、`opencv-python`、`numpy`、`scipy`、`Pillow`、`PyYAML`、`pytest` です。ほかに次の物を使います。
+
+- 判定：[Claude Code](https://claude.com/claude-code) の `claude` コマンド
+- 輪郭：conda 環境 `tidyvision` に `ultralytics` を入れ、SAM の重み `sam2.1_b.pt` を `scripts/` に置く
+- 写真からの3D：`~/Hunyuan3D-2.1` の [Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1)（なければ輪郭の押し出しで代用）
+- 録画と動画：`ffmpeg`、Noto Sans CJK フォント
 
 ### シミュレーション
 
@@ -71,11 +78,21 @@ python3 battle.py --out ../outputs/battle                        # シミュレ�
 
 ### 実機
 
-実機では、必ず人がそばにいる状態で動かしてください。手順は [`docs/real_arm.md`](docs/real_arm.md) にあります。
+実機では、必ず人がそばにいる状態で動かしてください。止め方を含めた手順は [`docs/real_arm.md`](docs/real_arm.md) にあります。
+
+環境変数で、人から渡す情報を指定できます。
+
+| 変数 | 内容 |
+|---|---|
+| `TIDY_PERSON_NOTES` | 人が判定に伝える事実のファイル（例：「このコップは樹脂」）。あると記憶より優先する |
+| `TIDY_LEARNED` | 物の名前の一部と作戦の対応表（JSON）。計画がない物にだけ効く |
+| `TIDY_RIM_INSET` | 縁をつまむ位置の、外周からの距離（m、既定 0.008） |
+| `TIDY_REAL_HEIGHTS` | 実機で測った高さ（`x,y,h;...`）。召喚に使う |
 
 ## ライセンス
 
 このリポジトリのコードは MIT ライセンスです（[`LICENSE`](LICENSE)）。素材は次の通りです。
 
 - `scripts/mj_assets/objects/gso_*` は [Google Scanned Objects](https://research.google/blog/scanned-objects-by-google-research-a-dataset-of-3d-scanned-common-household-items/)（CC-BY 4.0）を変換したものです。詳細は [`GSO_LICENSE.txt`](scripts/mj_assets/objects/GSO_LICENSE.txt) を見てください。
+- `scripts/mj_assets/objects/` の `paper`、`paper_b`、`purple_marker` は、机の写真から Hunyuan3D-2.1 で作ったものです。Hunyuan3D のライセンスに従います。
 - アームのモデルとドライバーは [Seeed-Projects/reBotArmController_ROS2](https://github.com/Seeed-Projects/reBotArmController_ROS2) のものです。このリポジトリには含みません。

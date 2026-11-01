@@ -335,7 +335,7 @@ def ask_fast(scene, out, calib, model="sonnet", advice="", recall=None, missed=N
 
     def judge(job):
         name, bbox, path, size = job
-        known = recall(name, cv2.imread(str(path)), size) if recall else None
+        known = recall(name, cv2.imread(str(path)), size) if recall and not person_said() else None
         if known:
             return {"name": name, "bbox": bbox, **known, "recalled": True}
         try:

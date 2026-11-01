@@ -7,7 +7,7 @@
 Neither has a depth camera (the real desk has none). Writes OUT/results.json and prints the table.
 
     source /opt/ros/humble/setup.bash
-    export MUJOCO_GL=egl TIDY_SAM_GPU=GPU-99571e8f-28bd-4db3-dadb-aea80850be59 MJ_FINGER_KP=1200
+    export MUJOCO_GL=egl TIDY_SAM_GPU=0 MJ_FINGER_KP=1200
     python3 rehearse_eval.py --seeds 1-6 --out OUT [--desks-at-once 2]
 """
 import argparse
