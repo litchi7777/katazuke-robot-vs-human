@@ -4,7 +4,6 @@
     python3 make_final_edit.py OUTPUT.mp4
 Real footage is 2x up to the second tape; from the cup on it runs on at 5x, uncut, each stretch marked with its speed.
 """
-import json
 import subprocess
 import sys
 from pathlib import Path
@@ -18,7 +17,6 @@ WORK = ROOT / "final/work_edit"
 TIDY = ROOT / "summon/real_20/videos/real_attempt_01_video0.mkv"
 TAPE = ROOT / "summon/real_22/videos/real_attempt_01_video0.mkv"
 BOTTLE = ROOT / "summon/real_13/videos/real_attempt_03_video0.mkv"
-NOTES = ROOT / "summon/real_11/notebook/lessons.json"
 BOTTLE2 = ROOT / "summon/real_14/videos/real_attempt_04_video0.mkv"
 FONT = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
 W, H, FPS = 1280, 720, 30
@@ -76,34 +74,9 @@ def raw(name, source, start, end, text, speed=2):
     return path
 
 
-def still(name, image, seconds=STEP_SECONDS):
+def still(name, image):
     path = WORK / f"{name}.mp4"
-    run("-loop", "1", "-framerate", str(FPS), "-t", str(seconds), "-i", str(image), *enc(path))
-    return path
-
-
-def notebook():
-    """The tape's lessons as Claude wrote them, first to last."""
-    lessons = json.loads(NOTES.read_text())
-    picked = [lessons[0], lessons[1], lessons[2], lessons[-1]]
-    im = Image.new("RGB", (W, H), (14, 18, 26))
-    d = ImageDraw.Draw(im)
-    big, text = ImageFont.truetype(FONT, 40, index=0), ImageFont.truetype(FONT, 29, index=0)
-    d.text((80, 84), "Claude の経験ノート", font=big, fill=(255, 255, 255))
-    d.text((80, 142), "テープについて書いた教訓（原文）", font=ImageFont.truetype(FONT, 24, index=0), fill=(150, 160, 175))
-    y = 214
-    for k, l in enumerate(picked):
-        last = k == len(picked) - 1
-        d.text((80, y), l["created"][11:16], font=text, fill=(110, 220, 255))
-        cut = l["text"].find("。") + 1     # a long lesson breaks between its two sentences
-        whole = d.textlength(l["text"], font=text) <= 1010
-        lines = [l["text"]] if whole else [l["text"][:cut], l["text"][cut:]]
-        for line in lines:
-            d.text((200, y), line, font=text, fill=(255, 110, 90) if last else (225, 230, 238))
-            y += 44
-        y += 26
-    path = WORK / "e_note.png"
-    im.save(path)
+    run("-loop", "1", "-framerate", str(FPS), "-t", str(STEP_SECONDS), "-i", str(image), *enc(path))
     return path
 
 
@@ -117,7 +90,6 @@ def main():
     parts += [still(f"c_step{k}", STEPS / f"step{k}.png") for k in range(1, 6)]
     parts += [draft("d_marker", 392, 1623),
               fixed("e_sim", 1759, 2179, SIM_ROWS, "シミュレーション：Claude が「縁をつまむ」を選び、持ち上げられると確認", 654),
-              still("e_note", notebook(), 5.0),
               fixed("f_tape2", 2179, 2959, BAR_ROWS, tape2),
               raw("g_cup", TIDY, 150, 193, cup, FAST), raw("h_tissue", TIDY, 193, 245, tissue, FAST),
               raw("i_box", TIDY, 245, 292, rest, FAST), raw("i_tissue", TIDY, 292, 345, rest, FAST),
