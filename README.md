@@ -32,6 +32,8 @@
 
 ## 実験
 
+`scripts/` のファイルごとの役割は [`scripts/README.md`](scripts/README.md) にあります。
+
 | スクリプト | 内容 |
 |---|---|
 | `scripts/tidy_desk.py` | 片付けの本体。実機とシミュレーションの両方で動く |
@@ -41,7 +43,7 @@
 | `scripts/mj_campaign.py` | 決まった机のセットで成績を測る（改善で悪化していないかの確認） |
 | `scripts/desk_memory.py` | 経験ノート。失敗から教訓を貯めて次に使う |
 | `scripts/mj_scene.py`、`mj_arm.py` | MuJoCo の机とアーム。カメラは実機の校正値を使う |
-| `scripts/make_final_video.py`、`make_final_edit.py`、`make_flow_steps.py` | 提出動画の編集に使ったもの。実験の録画（`outputs/`、リポジトリには含まない）が必要なので、そのままでは動かない |
+| `video/` | 提出動画の編集に使ったもの。実験の録画（`outputs/`、リポジトリには含まない）が必要なので、そのままでは動かない |
 
 ## 動かし方
 
