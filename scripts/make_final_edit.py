@@ -94,7 +94,7 @@ def main():
               raw("g_cup", TIDY, 150, 193, cup, FAST), raw("h_tissue", TIDY, 193, 245, tissue, FAST),
               raw("i_box", TIDY, 245, 292, rest, FAST), raw("i_tissue", TIDY, 292, 345, rest, FAST),
               raw("i_tape", TAPE, 45, 92, rest, FAST),
-              raw("j_bottle1", BOTTLE, 120, 178, bottle, FAST), raw("j_bottle2", BOTTLE2, 150, 198, bottle, FAST)]
+              raw("j_bottle1", BOTTLE, 150, 178, bottle, FAST), raw("j_bottle2", BOTTLE2, 168, 198, bottle, FAST)]
     listing = WORK / "list.txt"
     listing.write_text("".join(f"file '{p}'\n" for p in parts))
     run("-f", "concat", "-safe", "0", "-i", str(listing), "-an", "-c:v", "libx264", "-crf", "20", "-preset", "medium",
